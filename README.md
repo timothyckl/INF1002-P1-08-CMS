@@ -12,6 +12,7 @@ The project is implemented in C and focuses on applying key programming concepts
 ### Prerequisites
 - A C compiler (e.g. gcc or clang)
 - `make` installed (optional but recommended)
+- Criterion for unit tests (?)
 
 ### Build
 
