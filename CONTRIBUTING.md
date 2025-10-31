@@ -5,7 +5,7 @@ Thanks for contributing to this project! Please follow these simple guidelines t
 ## 1. Getting Started
 - Fork the repository and clone your fork:
   ```bash
-  git clone https://github.com/<your-username>/INF1002-P1-08-C.git
+  git clone git@github.com:timothyckl/INF1002-P1-08-C.git
   ```
 - Create a new branch for your work:
   ```bash
