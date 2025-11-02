@@ -2,7 +2,8 @@
 
 #include "utils.h"
 
-#define MAX_LINE_LENGTH 256 // this number was arbitrarily chosen
+// this number was arbitrarily chosen
+#define MAX_LINE_LENGTH 256 
 
 int main(int argc, char *argv[]) {
   // check command line arguments
