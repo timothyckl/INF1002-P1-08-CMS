@@ -8,7 +8,7 @@ int check_args(int argc, char *argv[]){
   return 0;
 }
 
-FILE *open_file(const char *file_path) {
+FILE *get_file_handle(const char *file_path) {
   FILE *file_handle = fopen(file_path, "r");
 
   if (file_handle == NULL) {
@@ -19,14 +19,30 @@ FILE *open_file(const char *file_path) {
   return file_handle;
 }
 
-void read_file(int buffer_size, FILE* handle, bool show_line_num){
+void print_file_lines(FILE* handle, int buffer_size, bool show_line_num){
   char buffer[buffer_size];
   int current_line = 0;
 
+  // print content line by line
   while (fgets(buffer, buffer_size, handle) != NULL) {
     if (show_line_num) {
       current_line++;
       printf("Line %i: %s", current_line, buffer);
     } else { printf("%s", buffer); }
   }
+
+  // close file after usage
+  fclose(handle);
 }
+
+// void read_file(int buffer_size, FILE* handle, bool show_line_num){
+//   char buffer[buffer_size];
+//   int current_line = 0;
+//
+//   while (fgets(buffer, buffer_size, handle) != NULL) {
+//     if (show_line_num) {
+//       current_line++;
+//       printf("Line %i: %s", current_line, buffer);
+//     } else { printf("%s", buffer); }
+//   }
+// }
