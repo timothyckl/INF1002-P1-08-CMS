@@ -1,10 +1,4 @@
-
-// typedef struct {
-//   int id;
-//   char name[50];
-//   char prog[50]; 
-//   float mark;
-// } Student;
+#include "database.h"
 
 
 // // Example:
