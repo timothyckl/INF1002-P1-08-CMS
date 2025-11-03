@@ -1,6 +1,6 @@
 # Compiler and flags
 CC := gcc
-CFLAGS := -Wall -Wextra -g
+CFLAGS := -Iinclude -Wall -Wextra -g
 LDFLAGS :=              # e.g. -lm if you need libm
 
 # Directories
@@ -29,7 +29,7 @@ $(BUILD_DIR):
 
 # Run the executable
 run: $(TARGET)
-	./$(TARGET)
+	./$(TARGET) data/P1_8-CMS.txt
 
 # Clean
 clean:
