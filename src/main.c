@@ -4,6 +4,22 @@
 
 // this number was arbitrarily chosen
 #define MAX_LINE_LENGTH 256 
+#define DECLARATION_FILE_PATH "declaration.txt"
+#define SHOW_LINE_NUM true
+
+// typedef struct {
+//   int id;
+//   char name[50];
+//   char prog[50]; 
+//   float mark;
+// } Student;
+
+// pattern for first few rows: Database Name:\s*(.+)
+// pattern for actual table: [^\t\r\n]+
+
+// // Example:
+// Student s = {1, "tim", "Applied AI", 95.5};
+// printf("id: %i, name: %s, prog: %s, mark: %.2f\n", s.id, s.name, s.prog, s.mark);
 
 int main(int argc, char *argv[]) {
   // check command line arguments
@@ -16,13 +32,7 @@ int main(int argc, char *argv[]) {
   printf("Success opening file!\n");
 
   // reads file line by line
-  char buffer[MAX_LINE_LENGTH];
-  int current_line = 0;
-
-  while (fgets(buffer, MAX_LINE_LENGTH, file_handle) != NULL) {
-    current_line++;
-    printf("Line %i: %s", current_line, buffer);
-  }
+  read_file(MAX_LINE_LENGTH, file_handle, SHOW_LINE_NUM);;
 
   // close file after usage
   fclose(file_handle);
