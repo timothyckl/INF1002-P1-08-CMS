@@ -34,15 +34,3 @@ void print_file_lines(FILE* handle, int buffer_size, bool show_line_num){
   // close file after usage
   fclose(handle);
 }
-
-// void read_file(int buffer_size, FILE* handle, bool show_line_num){
-//   char buffer[buffer_size];
-//   int current_line = 0;
-//
-//   while (fgets(buffer, buffer_size, handle) != NULL) {
-//     if (show_line_num) {
-//       current_line++;
-//       printf("Line %i: %s", current_line, buffer);
-//     } else { printf("%s", buffer); }
-//   }
-// }
