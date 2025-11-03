@@ -7,20 +7,9 @@
 #define DECLARATION_FILE_PATH "declaration.txt"
 #define SHOW_LINE_NUM true
 
-// typedef struct {
-//   int id;
-//   char name[50];
-//   char prog[50]; 
-//   float mark;
-// } Student;
 
-// pattern for first few rows: Database Name:\s*(.+)
-// pattern for actual table: [^\t\r\n]+
-
-// // Example:
-// Student s = {1, "tim", "Applied AI", 95.5};
-// printf("id: %i, name: %s, prog: %s, mark: %.2f\n", s.id, s.name, s.prog, s.mark);
-
+// TODO: implement parser (i'm thinking js use regex)
+// TODO: implement structure to store data after parsing
 int main(int argc, char *argv[]) {
   // check command line arguments
   if (check_args(argc, argv) != 0) { return EXIT_FAILURE; }
