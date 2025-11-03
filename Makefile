@@ -1,6 +1,6 @@
 # Compiler and flags
 CC := gcc
-CFLAGS := -Wall -Wextra -g
+CFLAGS := -Iinclude -Wall -Wextra -g
 LDFLAGS :=              # e.g. -lm if you need libm
 
 # Directories
