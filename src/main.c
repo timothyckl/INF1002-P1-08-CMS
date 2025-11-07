@@ -4,16 +4,18 @@
 #include "database.h"
 #include "utils.h"
 
+// TODO: abstract away public facing interface with simpler API calls
+
 int main(int argc, char *argv[]) {
   // check command line arguments
   if (check_args(argc, argv) != 0) {
     return EXIT_FAILURE;
   }
 
-  // initialize database
+  // initialise database
   StudentDatabase *db = db_init();
   if (!db) {
-    fprintf(stderr, "Failed to initialize database\n");
+    fprintf(stderr, "Failed to initialise database\n");
     return EXIT_FAILURE;
   }
 
