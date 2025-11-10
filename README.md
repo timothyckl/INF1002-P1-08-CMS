@@ -20,6 +20,7 @@ To compile the program:
 ```bash
 make
 ```
+See [Support Guide](SUPPORT.md) to setup Make.exe in windows enviroment.
 
 or manually:
 ```bash
