@@ -33,6 +33,3 @@ gcc -o main main.c
 
 ## 🧪 Testing
 > (Add more details here when testing setup is ready.)
-
-## 🧑‍💻 Contributing
-See [Contribution Guide](CONTRIBUTING.md) for contribution guidelines.
