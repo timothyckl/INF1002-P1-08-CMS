@@ -1,0 +1,10 @@
+﻿CompileFlags:
+  Add:
+    - "-IC:/Users/muham/INF1002-P1-08-C/include"
+    - "-isystem"
+    - "C:/msys64/ucrt64/include"
+    - "-isystem"
+    - "C:/msys64/ucrt64/x86_64-w64-mingw32/include"
+    - "--target=x86_64-w64-mingw32"
+    - "-x"
+    - "c"
