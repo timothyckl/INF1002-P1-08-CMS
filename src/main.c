@@ -5,11 +5,17 @@
 #include "utils.h"
 
 // TODO: abstract away public facing interface with simpler API calls
+
 // TODO handle QUERY command:
 // - ensure a database has been opened
 // - prompt for student ID input, validate numeric range 0-9,999,999
 // - call helper to locate the record
 // - print record details if found, otherwise warn user
+
+// TODO helper:
+//   find_record_by_id(StudentDatabase*, int id)
+//     loop tables -> loop records -> compare id
+//     return pointer or NULL
 
 // TODO handle UNIQUE FEATURE command:
 // - ensure database loaded
