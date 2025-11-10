@@ -66,29 +66,15 @@ static Operation get_user_input(char *buf) {
   putchar('\n');
 
   // convert inp_buf to int
+  // im kms... ts is super unsafe change to strtok and read the docs
   Operation op = atoi(buf);
 
   return op;
 }
 
-// TODO: i need a better name for this function ;-;
-CMSStatus main_loop(int argc, char *argv[]) {
-  CMSStatus status;
-
-  status = cms_init(argc, argv);
-  // process status
-
-  char inp_buf[100];
-  Operation usr_inp;
-
-  do {
-    status = display_menu();
-    // process status
-
-    usr_inp = get_user_input(inp_buf);
-
+static void operation_router(Operation op) {
     // handle usr_inp
-    switch (usr_inp) {
+    switch (op) {
     case OPEN_OP:
       printf("fein\n");
       break;
@@ -107,6 +93,24 @@ CMSStatus main_loop(int argc, char *argv[]) {
       printf("invalid operation type shi\n");
       break;
     }
+}
+
+// TODO: i need a better name for this function ;-;
+CMSStatus main_loop(int argc, char *argv[]) {
+  CMSStatus status;
+
+  status = cms_init(argc, argv);
+  // process status
+
+  char inp_buf[100];
+  Operation usr_inp;
+
+  do {
+    status = display_menu();
+    // process status
+
+    usr_inp = get_user_input(inp_buf);
+    operation_router(usr_inp);
 
   } while (usr_inp != EXIT_OP);
 
