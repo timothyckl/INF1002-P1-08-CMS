@@ -5,6 +5,17 @@
 #include "utils.h"
 
 // TODO: abstract away public facing interface with simpler API calls
+// TODO handle QUERY command:
+// - ensure a database has been opened
+// - prompt for student ID input, validate numeric range 0-9,999,999
+// - call helper to locate the record
+// - print record details if found, otherwise warn user
+
+// TODO handle UNIQUE FEATURE command:
+// - ensure database loaded
+// - gather any extra user input specific to the feature
+// - compute result using in-memory tables/records
+// - display formatted output to the user
 
 int main(int argc, char *argv[]) {
   // check command line arguments

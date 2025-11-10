@@ -189,6 +189,15 @@ DBStatus db_load(StudentDatabase *db, const char *filename) {
   return parse_file(filename, db);
 }
 
+// TODO: implement helper StudentRecord *db_find_record_by_id(StudentDatabase *db, int id)
+// - iterate tables and their records
+// - return pointer to matching record or NULL
+
+// TODO: implement helper(s) for the unique feature once defined
+// - accept StudentDatabase * and any required parameters
+// - compute or transform data (e.g., summary stats / filtered set / export buffer)
+// - provide a clear status/result structure for CLI to display
+
 /*
  * convert status code to human-readable string
  * returns: string description of status
