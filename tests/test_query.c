@@ -4,13 +4,12 @@
 #include "database.h"
 
 /*
- * Future helper-level test ideas (not yet implemented here):
- * - db == NULL should return NULL safely
- * - database initialised but no tables/records loaded
- * - multiple tables to ensure search continues past table 0
- * - queries immediately after INSERT/UPDATE/DELETE
- * - smallest/largest valid IDs that exist
- * These involve behaviours outside this simple harness but are noted for later.
+ * CLI-level behaviours handled outside this helper:
+ * - parsing user input strings into integer IDs
+ * - rejecting non-numeric or out-of-range IDs
+ * - ensuring the database file has been opened before QUERY
+ * - printing user-facing success or warning messages
+ * - command dispatch / REPL loop control
  */
 
 static void print_record(const StudentRecord *record) {
