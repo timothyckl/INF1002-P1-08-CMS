@@ -20,15 +20,16 @@ To compile the program:
 ```bash
 make
 ```
+See [Support Guide](SUPPORT.md) to setup Make.exe in windows enviroment.
 
 or manually:
 ```bash
-gcc -o main main.c
+gcc -Iinclude src\*.c -o main.exe
 ```
 
 ### Run
 ```bash
-./main
+.\main.exe data\P1_8-CMS.txt
 ```
 
 ## 🧪 Testing
