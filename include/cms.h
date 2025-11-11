@@ -1,15 +1,17 @@
 #ifndef CMS_H
 #define CMS_H
 
+// enums provide meaningful identifiers for status/errors at various failure points
 typedef enum {
-  CMS_OP_SUCCESS,
-  CMS_OP_FAILURE,
-  CMS_INVALID_ARG,
-  // ...
+  CMS_SUCCESS,        // when an operation executes without issues
+  CMS_INIT_FAILURE,   // failed initialise step
+  CMS_INVALID_ARG,    // failed to receive expected arguments 
+  CMS_FILE_OPEN_ERR,  // failed to get file handle
+  CMS_FILE_IO_ERR,    // failed any file read/write operations etc
 } CMSStatus;
 
 CMSStatus cms_init(int argc, char *argv[]);
 CMSStatus display_menu(void);
-CMSStatus main_loop(int argc, char *argv[]); 
+CMSStatus main_loop(int argc, char *argv[]);
 
 #endif
