@@ -69,7 +69,10 @@ DBStatus db_add_table(StudentDatabase *db, StudentTable *table);
 // file loading (calls parser internally)
 DBStatus db_load(StudentDatabase *db, const char *filename);
 
-// record lookup helper for QUERY/UPDATE/DELETE commands
+/*
+ * find student record by ID helper
+ * returns pointer to record on success, NULL otherwise
+ */
 StudentRecord *db_find_record_by_id(StudentDatabase *db, int id);
 
 // helper to convert status to string (for error messages)

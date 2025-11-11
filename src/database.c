@@ -189,6 +189,10 @@ DBStatus db_load(StudentDatabase *db, const char *filename) {
   return parse_file(filename, db);
 }
 
+/*
+ * find student record by ID
+ * returns: pointer to record on success, NULL if not found or invalid args
+ */
 StudentRecord *db_find_record_by_id(StudentDatabase *db, int id) {
   if (!db) {
     return NULL;
