@@ -4,7 +4,7 @@
 #include "database.h"
 
 /*
- * CLI-level behaviours handled outside this helper:
+ * CLI-level behaviours that shoudl be addressed handled outside this helper:
  * - parsing user input strings into integer IDs
  * - rejecting non-numeric or out-of-range IDs
  * - ensuring the database file has been opened before QUERY
@@ -16,11 +16,8 @@ static void print_record(const StudentRecord *record) {
   if (!record) {
     return;
   }
-  // display core student fields for visual verification
-  printf("  ID: %d\n", record->id);
-  printf("  Name: %s\n", record->name);
-  printf("  Programme: %s\n", record->prog);
-  printf("  Mark: %.1f\n", record->mark);
+  // match main.c single-line tab-separated record format
+  printf("  %d\t%s\t%s\t%.1f\n", record->id, record->name, record->prog, record->mark);
 }
 
 static void expect_null_record(StudentRecord *record, const char *case_name) {
@@ -37,6 +34,8 @@ static void run_query(StudentDatabase *db, int id) {
   StudentRecord *record = db_find_record_by_id(db, id);
   if (record) {
     printf("[OK] Found record for ID=%d:\n", id);
+    // print header row to mirror main's field order
+    printf("  ID\tName\tProgramme\tMark\n");
     print_record(record);
   } else {
     printf("[WARN] No record found for ID=%d\n", id);
