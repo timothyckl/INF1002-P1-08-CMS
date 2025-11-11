@@ -189,9 +189,27 @@ DBStatus db_load(StudentDatabase *db, const char *filename) {
   return parse_file(filename, db);
 }
 
-// TODO: implement helper StudentRecord *db_find_record_by_id(StudentDatabase *db, int id)
-// - iterate tables and their records
-// - return pointer to matching record or NULL
+StudentRecord *db_find_record_by_id(StudentDatabase *db, int id) {
+  if (!db) {
+    return NULL;
+  }
+
+  for (size_t t = 0; t < db->table_count; t++) {
+    StudentTable *table = db->tables[t];
+    if (!table) {
+      continue;
+    }
+
+    for (size_t r = 0; r < table->record_count; r++) {
+      StudentRecord *record = &table->records[r];
+      if (record->id == id) {
+        return record;
+      }
+    }
+  }
+
+  return NULL;
+}
 
 //   if (!db_loaded) {
 //     print "open first"
