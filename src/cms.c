@@ -1,10 +1,12 @@
 #include "cms.h"
+#include "database.h"
 #include "utils.h"
 #include <stdlib.h>
 #include <string.h>
 
 #define DECLARATION_FILE_PATH "assets/declaration.txt"
 #define MENU_FILE_PATH "assets/menu.txt"
+#define DEFAULT_DATA_FILE "data/P1-8_CMS.txt"
 
 // we define these enums here (and not in the header) because the will not be
 // used anywhere else in the codebase
@@ -21,6 +23,7 @@ typedef enum {
 
 typedef enum {
   OP_SUCCESS,
+  OPEN_FAILURE, // failed to open file
   OP_ERR,
   OP_INVALID,
 } OperationStatus;
@@ -80,9 +83,43 @@ static OperationStatus get_user_input(char *buf, Operation *op) {
 
 // CMS operations (not to be confused with db operations)
 // are defined here. feel free to rename them and modify the function signatures
-OperationStatus open() {
-  // your code here
-  printf("you selected open!\n");
+static OperationStatus open(StudentDatabase *db) {
+  char path_buf[100];
+  char *path = NULL;
+
+  // ask user for db file path
+  printf("Enter a file path (press ENTER for default data file): ");
+  fflush(stdout);
+
+  if (!fgets(path_buf, sizeof path_buf, stdin)) {
+    // Input error or EOF – use default
+    fprintf(stderr, "No input received. Using default data file (%s).\n",
+            DEFAULT_DATA_FILE);
+    path = DEFAULT_DATA_FILE;
+  } else {
+    // strip trailing newline (and optional CR)
+    size_t len = strcspn(path_buf, "\r\n");
+    path_buf[len] = '\0';
+
+    if (len == 0) {
+      // empty line -> default
+      printf("No input received. Using default data file (%s).\n",
+             DEFAULT_DATA_FILE);
+      path = DEFAULT_DATA_FILE;
+    } else {
+      path = path_buf;
+    }
+  }
+
+  // load file into db
+  DBStatus status = db_load(db, path);
+  if (status != DB_SUCCESS) {
+    fprintf(stderr, "Failed to load database: %s\n", db_status_string(status));
+    db_free(db);
+    return OPEN_FAILURE;
+  }
+
+  printf("The database file “%s” is successfully opened.", path);
 
   return OP_SUCCESS;
 }
@@ -96,7 +133,8 @@ OperationStatus show_all() {
 
 OperationStatus insert() {
   // your code here
-  printf("you selected insert!\n");
+  // printf("you selected insert!\n");
+  printf("hi!\n");
 
   return OP_SUCCESS;
 }
@@ -129,12 +167,12 @@ OperationStatus save() {
   return OP_SUCCESS;
 }
 
-static OperationStatus operation_router(Operation op) {
+static OperationStatus operation_router(Operation op, StudentDatabase *db) {
   OperationStatus status;
 
   switch (op) {
   case OPEN:
-    status = open();
+    status = open(db);
     return status;
   case SHOW_ALL:
     status = show_all();
@@ -168,39 +206,44 @@ CMSStatus main_loop(int argc, char *argv[]) {
   CMSStatus status;
 
   status = cms_init(argc, argv);
-  // process status
+  if (status != CMS_SUCCESS) {
+    fprintf(stderr, "Failed to display menu: %s\n", cms_status_string(status));
+    return status;
+  }
+
+  // init db
+  StudentDatabase *db = db_init();
+  if (!db) {
+    fprintf(stderr, "Failed to initialise database\n");
+    return CMS_DB_INIT_FAILURE;
+  }
 
   char inp_buf[100];
   Operation op;
+  OperationStatus op_status;
 
+  // main loop
   do {
     status = display_menu();
-    // process status
-
-    get_user_input(inp_buf, &op);
-    operation_router(op);
-
+    if (status != CMS_SUCCESS) {
+      fprintf(stderr, "Failed to display menu: %s\n",
+              cms_status_string(status));
+      return status;
+    }
+    op_status = get_user_input(inp_buf, &op);
+    // if (op_status != OP_SUCCESS) {
+    //   fprintf(stderr, "Failed to perform operation: %s\n",
+    //   operation_status_string(op_status)); return status;
+    // }
+    op_status = operation_router(op, db);
+    // if (op_status != OP_SUCCESS) {
+    //   fprintf(stderr, "Failed to perform operation: %s\n",
+    //   operation_status_string(op_status)); return status;
+    // }
   } while (op != EXIT);
 
   return CMS_SUCCESS;
 }
-
-// static const char *op_string(CMSStatus status) {
-//   switch (status) {
-//   case CMS_SUCCESS:
-//     return "operation completed successfully";
-//   case CMS_INIT_FAILURE:
-//     return "failed initialisation step";
-//   case CMS_INVALID_ARG:
-//     return "invalid argument received";
-//   case CMS_FILE_OPEN_ERR:
-//     return "failed to retrieve file handle";
-//   case CMS_FILE_IO_ERR:
-//     return "failed to complete operation on file";
-//   default:
-//     return "unknown error";
-//   }
-// }
 
 const char *cms_status_string(CMSStatus status) {
   switch (status) {
@@ -208,6 +251,8 @@ const char *cms_status_string(CMSStatus status) {
     return "operation completed successfully";
   case CMS_INIT_FAILURE:
     return "failed initialisation step";
+  case CMS_DB_INIT_FAILURE:
+    return "database failed to initialise";
   case CMS_INVALID_ARG:
     return "invalid argument received";
   case CMS_FILE_OPEN_ERR:
