@@ -1,6 +1,7 @@
 #include "cms.h"
 #include "database.h"
 #include "utils.h"
+#include "update.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -319,9 +320,15 @@ static OperationStatus operation_router(Operation op, StudentDatabase *db) {
   case QUERY:
     status = query();
     return status;
-  case UPDATE:
-    status = update();
-    return status;
+  case UPDATE: {
+    DBStatus db_st = cms_handle_update(db);
+    // convert DBStatus → OperationStatus
+    if (db_st == DB_SUCCESS) {
+      return OP_SUCCESS;
+    } else {
+      return OP_ERR;
+    }
+  }
   case DELETE:
     status = delete();
     return status;

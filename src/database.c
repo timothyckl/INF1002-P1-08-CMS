@@ -266,7 +266,7 @@ DBStatus db_update_record(
     }
 
     // validate using existing parser/validator
-    ValidationError v = validate_record(&updated);
+    ValidationStatus v = validate_record(&updated);
     if (v != VALID_RECORD) {
       return DB_ERROR_INVALID_DATA;
     }
