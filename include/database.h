@@ -75,6 +75,19 @@ DBStatus db_load(StudentDatabase *db, const char *filename);
  */
 StudentRecord *db_find_record_by_id(StudentDatabase *db, int id);
 
+/*
+ * update student record fields by ID
+ * Any of the pointer arguments may be NULL to "skip" updating that field.
+ * Returns DB_SUCCESS on success, DB_ERROR_NOT_FOUND if ID doesn't exist,
+ * or DB_ERROR_INVALID_DATA if new values fail validation.
+ */
+DBStatus db_update_record(
+  StudentDatabase *db,
+  int id,
+  const char *new_name,
+  const char *new_prog,
+  const float *new_mark);
+
 // helper to convert status to string (for error messages)
 const char *db_status_string(DBStatus status);
 

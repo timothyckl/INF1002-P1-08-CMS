@@ -215,6 +215,67 @@ StudentRecord *db_find_record_by_id(StudentDatabase *db, int id) {
   return NULL;
 }
 
+/*
+ * update a student record by ID
+ * - db: loaded StudentDatabase
+ * - id: student ID to search for
+ * - new_name / new_prog / new_mark:
+ *      pass NULL to leave a field unchanged
+ *      pass a pointer (or string) to update that field
+ *
+ * Returns:
+ *   DB_SUCCESS on success
+ *   DB_ERROR_NOT_FOUND if no record with that ID exists
+ *   DB_ERROR_INVALID_DATA if the updated record fails validation
+ *   DB_ERROR_NULL_POINTER if db is NULL
+ */
+DBStatus db_update_record(
+  StudentDatabase *db,
+  int id,
+  const char *new_name,
+  const char *new_prog,
+  const float *new_mark) {
+    
+    if (!db) {
+      return DB_ERROR_NULL_POINTER;
+    }
+
+    // locate the record using existing helper
+    StudentRecord *record = db_find_record_by_id(db, id);
+    if (!record) {
+      return DB_ERROR_NOT_FOUND;
+    }
+
+    // make a copy so we can validate safely before committing
+    StudentRecord updated = *record;
+
+    if (new_name) {
+      // copy at most sizeof(name) - 1 chars and null-terminate
+      strncpy(updated.name, new_name, sizeof(updated.name) - 1);
+      updated.name[sizeof(updated.name) - 1] = '\0';
+    }
+
+    if (new_prog) {
+      strncpy(updated.prog, new_prog, sizeof(updated.prog) - 1);
+      updated.prog[sizeof(updated.prog) - 1] = '\0';
+    }
+
+    if (new_mark) {
+      updated.mark = *new_mark;
+    }
+
+    // validate using existing parser/validator
+    ValidationError v = validate_record(&updated);
+    if (v != VALID_RECORD) {
+      return DB_ERROR_INVALID_DATA;
+    }
+
+  // commit the changes now that they're known to be valid
+  *record = updated;
+  return DB_SUCCESS;
+}
+
+
 //   if (!db_loaded) {
 //     print "open first"
 //     return
