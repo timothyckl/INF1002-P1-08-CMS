@@ -169,6 +169,19 @@ static OperationStatus open(StudentDatabase *db) {
     return OPEN_FAILURE;
   }
 
+  // TEMP TEST CODE: tweak the first record's mark
+  if (db->table_count > 0 && db->tables[0]->record_count > 0) {
+  StudentTable *t = db->tables[0];
+  StudentRecord *r = &t->records[0];
+  printf("Before tweak: id=%d mark=%.2f\n", r->id, r->mark);
+  r->mark += 5.0f;  // bump by 5 for testing
+  printf("After  tweak: id=%d mark=%.2f\n", r->id, r->mark);
+  }
+
+  // remember the path inside the database struct
+  strncpy(db->filepath, path, sizeof db->filepath);
+  db->filepath[sizeof db->filepath - 1] = '\0';
+  
   // success - mark database as loaded
   db->is_loaded = true;
   printf("CMS: The database file \"%s\" is successfully opened.\n", path);
@@ -296,12 +309,65 @@ OperationStatus delete() {
   return OP_SUCCESS;
 }
 
-OperationStatus save() {
-  // your code here
-  printf("you selected save!\n");
+static OperationStatus save(StudentDatabase *db) {
+  // validate database pointer
+  if (!db) {
+    return report_error_and_return("Database error.", OP_ERR);
+  }
+
+  // validate database is loaded
+  if (!db->is_loaded || db->table_count == 0) {
+    return report_error_and_return("Database not loaded.", OP_ERR);
+  }
+
+  // validate we have a filepath from OPEN
+  if (db->filepath[0] == '\0') {
+    return report_error_and_return("No file path stored for this database.", OP_ERR);
+  }
+
+  // access the StudentRecords table (by convention, index 0)
+  StudentTable *table = db->tables[0];
+  if (!table) {
+    return report_error_and_return("Table error.", OP_ERR);
+  }
+
+  FILE *fp = fopen(db->filepath, "w");
+  if (!fp) {
+    return report_error_and_return("Failed to save file.", OP_ERR);
+  }
+
+  // write header metadata
+  fprintf(fp, "Database Name: %s\n", db->db_name);
+  fprintf(fp, "Authors: %s\n", db->authors);
+  fprintf(fp, "\n");
+  fprintf(fp, "Table Name: %s\n", table->table_name);
+
+  // write column headers (ID, Name, Programme, Mark)
+  for (size_t i = 0; i < table->column_count; i++) {
+    fprintf(fp, "%s", table->column_headers[i]);
+    if (i + 1 < table->column_count) {
+      fputc('\t', fp);
+    }
+  }
+  fputc('\n', fp);
+
+  // write all records (including inserted/updated ones)
+  for (size_t i = 0; i < table->record_count; i++) {
+    const StudentRecord *r = &table->records[i];
+    fprintf(fp, "%d\t%s\t%s\t%.2f\n",
+            r->id, r->name, r->prog, r->mark);
+  }
+
+  if (fclose(fp) != 0) {
+    return report_error_and_return("Failed to close file.", OP_ERR);
+  }
+
+  printf("CMS: The database file \"%s\" is successfully saved.\n", db->filepath);
+  wait_for_user();
 
   return OP_SUCCESS;
 }
+
 
 static OperationStatus operation_router(Operation op, StudentDatabase *db) {
   OperationStatus status;
@@ -326,7 +392,7 @@ static OperationStatus operation_router(Operation op, StudentDatabase *db) {
     status = delete();
     return status;
   case SAVE:
-    status = save();
+    status = save(db);
     return status;
   case EXIT:
     printf("Goodbye!\n");
