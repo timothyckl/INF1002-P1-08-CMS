@@ -3,8 +3,8 @@
 
 // TODO: abstract away public facing interface with simpler API calls
 
-int main(int argc, char *argv[]) {
-  main_loop(argc, argv);
+int main() {
+  main_loop();
 
   // // initialise database
   // StudentDatabase *db = db_init();
