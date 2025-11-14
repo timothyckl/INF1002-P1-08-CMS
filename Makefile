@@ -29,7 +29,7 @@ $(BUILD_DIR):
 
 # Run the executable
 run: $(TARGET)
-	./$(TARGET) data/P1_8-CMS.txt
+	./$(TARGET) 
 
 # Clean
 clean:

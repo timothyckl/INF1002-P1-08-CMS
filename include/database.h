@@ -1,6 +1,7 @@
 #ifndef DATABASE_H
 #define DATABASE_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
 // capacity constants
@@ -52,6 +53,10 @@ typedef struct {
   StudentTable **tables; // array of table pointers
   size_t table_count;    // current number of tables
   size_t table_capacity; // allocated capacity for tables
+
+  // state tracking
+  // tracks if database has been loaded from file
+  bool is_loaded;
 } StudentDatabase;
 
 // table lifecycle

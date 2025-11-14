@@ -1,0 +1,15 @@
+==============================================================
+Class Management System
+
+Main Menu
+
+[1] OPEN: Opens a database file and reads in all records.
+[2] SHOW ALL: Shows all records in a database. 
+[3] INSERT: Add a new record to the database. 
+[4] QUERY: Search for a record in the database.  
+[5] UPDATE: Update a value for a given record. 
+[6] DELETE: Delete a record from the database.
+[7] SAVE: Save all records to the database file. 
+[8] EXIT: Exit the program.
+==============================================================
+

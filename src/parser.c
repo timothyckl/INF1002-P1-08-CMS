@@ -10,7 +10,7 @@
  * validate a student record
  * returns: VALID_RECORD if valid, error code otherwise
  */
-ValidationError validate_record(const StudentRecord *record) {
+ValidationStatus validate_record(const StudentRecord *record) {
   if (!record) {
     return INVALID_FIELD_COUNT;
   }
@@ -42,7 +42,7 @@ ValidationError validate_record(const StudentRecord *record) {
  * convert validation error to human-readable string
  * returns: string description of validation error
  */
-const char *validation_error_string(ValidationError error) {
+const char *validation_error_string(ValidationStatus error) {
   switch (error) {
   case VALID_RECORD:
     return "valid record";
@@ -317,7 +317,7 @@ DBStatus parse_file(const char *filename, StudentDatabase *db) {
       ParseStatus parse_status = parse_record_line(line, &record);
 
       if (parse_status == PARSE_SUCCESS) {
-        ValidationError validation = validate_record(&record);
+        ValidationStatus validation = validate_record(&record);
 
         if (validation == VALID_RECORD) {
           DBStatus add_status = table_add_record(current_table, &record);

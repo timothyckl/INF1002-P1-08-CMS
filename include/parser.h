@@ -10,7 +10,7 @@ typedef enum {
   INVALID_EMPTY_NAME,      // name field is empty
   INVALID_EMPTY_PROGRAMME, // programme field is empty
   INVALID_FIELD_COUNT      // incorrect number of fields
-} ValidationError;
+} ValidationStatus;
 
 typedef enum {
   PARSE_SUCCESS = 0,     // line parsed successfully
@@ -33,10 +33,10 @@ ParseStatus parse_column_headers(const char *line, char ***headers,
                                  size_t *count);
 
 // validation
-ValidationError validate_record(const StudentRecord *record);
+ValidationStatus validate_record(const StudentRecord *record);
 
 // helper to convert codes to strings
 const char *parse_status_string(ParseStatus status);
-const char *validation_error_string(ValidationError error);
+const char *validation_error_string(ValidationStatus error);
 
 #endif
