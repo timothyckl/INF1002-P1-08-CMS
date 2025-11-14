@@ -128,6 +128,7 @@ StudentDatabase *db_init(void) {
 
   db->table_count = 0;
   db->table_capacity = INITIAL_TABLE_CAPACITY;
+  db->is_loaded = false;
 
   return db;
 }
