@@ -2,6 +2,7 @@
 #include "database.h"
 #include "utils.h"
 #include <ctype.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -280,9 +281,94 @@ OperationStatus insert() {
   return OP_SUCCESS;
 }
 
-OperationStatus query() {
-  // your code here
-  printf("you selected query!\n");
+static OperationStatus query(StudentDatabase *db) {
+  // validate database pointer
+  if (!db) {
+    return report_error_and_return("Database error.", OP_ERR);
+  }
+
+  // ensure database is loaded before querying
+  if (!db->is_loaded || db->table_count == 0) {
+    return report_error_and_return("Database not loaded.", OP_ERR);
+  }
+
+  // retrieve student table reference
+  StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
+  if (!table) {
+    return report_error_and_return("Table error.", OP_ERR);
+  }
+
+  if (table->record_count == 0) {
+    printf("CMS: No records available to query.\n");
+    wait_for_user();
+    return OP_SUCCESS;
+  }
+
+  // prompt user for student ID
+  char input_buf[64];
+  printf("Enter student ID to search: ");
+  fflush(stdout);
+
+  if (!fgets(input_buf, sizeof input_buf, stdin)) {
+    return report_error_and_return("Failed to read input.", OP_ERR);
+  }
+
+  size_t len = strcspn(input_buf, "\r\n");
+  input_buf[len] = '\0';
+
+  if (len == 0) {
+    printf("CMS: Student ID cannot be empty.\n");
+    wait_for_user();
+    return OP_ERR;
+  }
+
+  char *endptr = NULL;
+  long parsed_id = strtol(input_buf, &endptr, 10);
+  if (endptr == input_buf || *endptr != '\0') {
+    printf("CMS: Please enter a numeric student ID.\n");
+    wait_for_user();
+    return OP_ERR;
+  }
+
+  if (parsed_id < 0 || parsed_id > INT_MAX) {
+    printf("CMS: Student ID must be within 0 to %d.\n", INT_MAX);
+    wait_for_user();
+    return OP_ERR;
+  }
+
+  // search for record with matching ID
+  StudentRecord *record = NULL;
+  for (size_t t = 0; t < db->table_count; t++) {
+    StudentTable *tbl = db->tables[t];
+    if (!tbl) {
+      continue;
+    }
+
+    for (size_t r = 0; r < tbl->record_count; r++) {
+      if (tbl->records[r].id == (int)parsed_id) {
+        record = &tbl->records[r];
+        break;
+      }
+    }
+    if (record) {
+      break;
+    }
+  }
+
+  if (!record) {
+    printf("CMS: The record with ID=%ld does not exist.\n", parsed_id);
+    wait_for_user();
+    return OP_SUCCESS;
+  }
+
+  printf("CMS: The record with ID=%d is found in table \"%s\".\n", record->id,
+         table->table_name);
+  printf("\n");
+  printf("ID\tName\tProgramme\tMark\n");
+  printf("%d\t%s\t%s\t%.2f\n", record->id, record->name, record->prog,
+         record->mark);
+
+  wait_for_user();
 
   return OP_SUCCESS;
 }
@@ -391,7 +477,7 @@ static OperationStatus operation_router(Operation op, StudentDatabase *db) {
     status = insert();
     return status;
   case QUERY:
-    status = query();
+    status = query(db);
     return status;
   case UPDATE:
     status = update();

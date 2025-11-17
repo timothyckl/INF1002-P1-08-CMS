@@ -128,8 +128,6 @@ StudentDatabase *db_init(void) {
 
   db->table_count = 0;
   db->table_capacity = INITIAL_TABLE_CAPACITY;
-  db->is_loaded = false;
-  db->filepath[0] = '\0';
 
   return db;
 }
@@ -190,6 +188,50 @@ DBStatus db_load(StudentDatabase *db, const char *filename) {
   }
   return parse_file(filename, db);
 }
+
+/*
+ * find student record by ID
+ * returns: pointer to record on success, NULL if not found or invalid args
+ */
+StudentRecord *db_find_record_by_id(StudentDatabase *db, int id) {
+  if (!db) {
+    return NULL;
+  }
+
+  for (size_t t = 0; t < db->table_count; t++) {
+    StudentTable *table = db->tables[t];
+    if (!table) {
+      continue;
+    }
+
+    for (size_t r = 0; r < table->record_count; r++) {
+      StudentRecord *record = &table->records[r];
+      if (record->id == id) {
+        return record;
+      }
+    }
+  }
+
+  return NULL;
+}
+
+//   if (!db_loaded) {
+//     print "open first"
+//     return
+//   }
+//   prompt "> Enter student ID: "
+//   read line
+//   if (invalid or out of range) {
+//     print "invalid ID"
+//     return
+//   }
+//   record = find_record_by_id(db, id)
+//   if (!record) {
+//     print "No record found"
+//   } else {
+//     print_record(record)
+//   }
+//
 
 /*
  * convert status code to human-readable string
