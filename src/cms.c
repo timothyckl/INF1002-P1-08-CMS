@@ -9,6 +9,7 @@
 #define MENU_FILE_PATH "assets/menu.txt"
 #define DEFAULT_DATA_FILE "data/P1_8-CMS.txt"
 #define DEFAULT_FILE_MSG "No input received. Using default data file (%s).\n"
+#define STUDENT_RECORDS_TABLE_INDEX 0
 
 // we define these enums here (and not in the header) because the will not be
 // used anywhere else in the codebase
@@ -195,7 +196,7 @@ static OperationStatus show_all(StudentDatabase *db) {
 
   // access the StudentRecords table
   // note: assumes tables[0] is always StudentRecords per database schema
-  StudentTable *table = db->tables[0];
+  StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
   if (!table) {
     return report_error_and_return("Table error.", OP_ERR);
   }
@@ -244,7 +245,7 @@ static OperationStatus show_all(StudentDatabase *db) {
     }
 
     // calculate mark width
-    len = snprintf(format_buf, sizeof format_buf, "%.1f", rec->mark);
+    len = snprintf(format_buf, sizeof format_buf, "%.2f", rec->mark);
     if (len > 0 && (size_t)len > max_mark_width) {
       max_mark_width = (size_t)len;
     }
@@ -258,7 +259,7 @@ static OperationStatus show_all(StudentDatabase *db) {
   // print all records
   for (size_t i = 0; i < table->record_count; i++) {
     StudentRecord *rec = &table->records[i];
-    printf("%-*d  %-*s  %-*s  %*.1f\n", (int)max_id_width, rec->id,
+    printf("%-*d  %-*s  %-*s  %*.2f\n", (int)max_id_width, rec->id,
            (int)max_name_width, rec->name, (int)max_prog_width, rec->prog,
            (int)max_mark_width, rec->mark);
   }
@@ -300,6 +301,11 @@ OperationStatus delete() {
   return OP_SUCCESS;
 }
 
+/*
+ * save database to file
+ * writes database metadata, table structure, and all records to filepath
+ * returns: OP_SUCCESS on success, OP_ERR on failure
+ */
 static OperationStatus save(StudentDatabase *db) {
   // validate database pointer
   if (!db) {
@@ -317,14 +323,22 @@ static OperationStatus save(StudentDatabase *db) {
   }
 
   // access the StudentRecords table (by convention, index 0)
-  StudentTable *table = db->tables[0];
+  StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
   if (!table) {
     return report_error_and_return("Table error.", OP_ERR);
   }
 
+  // validate table has column headers
+  if (!table->column_headers || table->column_count == 0) {
+    return report_error_and_return("Table has no column headers.", OP_ERR);
+  }
+
   FILE *fp = fopen(db->filepath, "w");
   if (!fp) {
-    return report_error_and_return("Failed to save file.", OP_ERR);
+    char err_msg[256];
+    snprintf(err_msg, sizeof(err_msg),
+             "Failed to open file '%s' for writing.", db->filepath);
+    return report_error_and_return(err_msg, OP_ERR);
   }
 
   // write header metadata
@@ -350,7 +364,10 @@ static OperationStatus save(StudentDatabase *db) {
   }
 
   if (fclose(fp) != 0) {
-    return report_error_and_return("Failed to close file.", OP_ERR);
+    char err_msg[256];
+    snprintf(err_msg, sizeof(err_msg),
+             "Failed to close file '%s' after writing.", db->filepath);
+    return report_error_and_return(err_msg, OP_ERR);
   }
 
   printf("CMS: The database file \"%s\" is successfully saved.\n", db->filepath);
