@@ -169,15 +169,6 @@ static OperationStatus open(StudentDatabase *db) {
     return OPEN_FAILURE;
   }
 
-  // TEMP TEST CODE: tweak the first record's mark
-  if (db->table_count > 0 && db->tables[0]->record_count > 0) {
-  StudentTable *t = db->tables[0];
-  StudentRecord *r = &t->records[0];
-  printf("Before tweak: id=%d mark=%.2f\n", r->id, r->mark);
-  r->mark += 5.0f;  // bump by 5 for testing
-  printf("After  tweak: id=%d mark=%.2f\n", r->id, r->mark);
-  }
-
   // remember the path inside the database struct
   strncpy(db->filepath, path, sizeof db->filepath);
   db->filepath[sizeof db->filepath - 1] = '\0';
