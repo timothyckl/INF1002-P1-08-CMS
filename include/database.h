@@ -7,6 +7,7 @@
 // capacity constants
 #define INITIAL_TABLE_CAPACITY 2
 #define INITIAL_RECORD_CAPACITY 10
+#define MAX_FILE_PATH 260
 
 // operation status codes
 typedef enum {
@@ -57,6 +58,9 @@ typedef struct {
   // state tracking
   // tracks if database has been loaded from file
   bool is_loaded;
+
+  // where the database was loaded from (for saving)
+  char filepath[MAX_FILE_PATH];
 } StudentDatabase;
 
 // table lifecycle
