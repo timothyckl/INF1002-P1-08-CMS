@@ -1,3 +1,16 @@
+/*
+ * test_query.c
+ *
+ * Test harness for the basic QUERY operation.
+ * Tests the search logic for finding student records by ID.
+ *
+ * Build command:
+ *   gcc -Iinclude -Wall -Wextra -g src/database.c src/parser.c src/cms.c src/utils.c src/adv_query.c tests/test_query.c -o build/test_query.exe
+ *
+ * Run command:
+ *   .\build\test_query.exe
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 

@@ -1,3 +1,16 @@
+/*
+ * test_adv_query.c
+ *
+ * Test harness for the advanced query (ADV QUERY) operation.
+ * Tests the pipeline-based search system with GREP and MARK filters.
+ *
+ * Build command:
+ *   gcc -Iinclude -Wall -Wextra -g src/database.c src/parser.c src/cms.c src/utils.c src/adv_query.c tests/test_adv_query.c -o build/test_adv_query.exe
+ *
+ * Run command:
+ *   .\build\test_adv_query.exe
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,3 +1,17 @@
+/*
+ * example_menu_adv_query.c
+ *
+ * Interactive menu harness for testing QUERY and ADV QUERY operations.
+ * Provides a simple menu interface to test both basic and advanced query
+ * functionality with user input.
+ *
+ * Build command:
+ *   gcc -Iinclude -Wall -Wextra -g src/database.c src/parser.c src/cms.c src/utils.c src/adv_query.c tests/example_menu_adv_query.c -o build/example_menu_adv_query.exe
+ *
+ * Run command:
+ *   .\build\example_menu_adv_query.exe
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,7 +97,25 @@ static void run_query(StudentDatabase *db) {
     return;
   }
 
-  StudentRecord *record = db_find_record_by_id(db, id);
+  // search for record with matching ID
+  StudentRecord *record = NULL;
+  for (size_t t = 0; t < db->table_count; t++) {
+    StudentTable *table = db->tables[t];
+    if (!table) {
+      continue;
+    }
+
+    for (size_t r = 0; r < table->record_count; r++) {
+      if (table->records[r].id == id) {
+        record = &table->records[r];
+        break;
+      }
+    }
+    if (record) {
+      break;
+    }
+  }
+
   if (!record) {
     printf("CMS: The record with ID=%d does not exist.\n", id);
     wait_for_enter();

@@ -538,6 +538,7 @@ CMSStatus main_loop(void) {
     // }
   } while (op != EXIT);
 
+  db_free(db);
   return CMS_SUCCESS;
 }
 
