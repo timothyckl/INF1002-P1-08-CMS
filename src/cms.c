@@ -3,6 +3,7 @@
 #include "parser.h"
 #include "utils.h"
 #include <ctype.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -174,7 +175,7 @@ static OperationStatus open(StudentDatabase *db) {
   // remember the path inside the database struct
   strncpy(db->filepath, path, sizeof db->filepath);
   db->filepath[sizeof db->filepath - 1] = '\0';
-  
+
   // success - mark database as loaded
   db->is_loaded = true;
   printf("CMS: The database file \"%s\" is successfully opened.\n", path);
@@ -212,8 +213,7 @@ static OperationStatus show_all(StudentDatabase *db) {
   }
 
   // print header message
-  printf("Table Name: %s\n\n",
-         table->table_name);
+  printf("Table Name: %s\n\n", table->table_name);
 
   // calculate dynamic column widths
   size_t max_id_width = 2;   // "ID" header minimum
@@ -319,12 +319,14 @@ static OperationStatus insert(StudentDatabase *db) {
 
   // check for conversion errors
   if (*endptr != '\0' || endptr == id_buf) {
-    return report_error_and_return("Invalid student ID format. Please enter a number.", OP_ERR);
+    return report_error_and_return(
+        "Invalid student ID format. Please enter a number.", OP_ERR);
   }
 
   // check ID range (fits in int)
   if (id_long < 0 || id_long > 9999999) {
-    return report_error_and_return("Student ID must be between 0 and 9999999.", OP_ERR);
+    return report_error_and_return("Student ID must be between 0 and 9999999.",
+                                   OP_ERR);
   }
 
   int student_id = (int)id_long;
@@ -333,7 +335,8 @@ static OperationStatus insert(StudentDatabase *db) {
   for (size_t i = 0; i < table->record_count; i++) {
     if (table->records[i].id == student_id) {
       char err_msg[256];
-      snprintf(err_msg, sizeof err_msg, "The record with ID=%d already exists.", student_id);
+      snprintf(err_msg, sizeof err_msg, "The record with ID=%d already exists.",
+               student_id);
       return report_error_and_return(err_msg, OP_ERR);
     }
   }
@@ -358,7 +361,8 @@ static OperationStatus insert(StudentDatabase *db) {
 
   // check name length fits in StudentRecord
   if (name_len >= 50) {
-    return report_error_and_return("Student name is too long (max 49 characters).", OP_ERR);
+    return report_error_and_return(
+        "Student name is too long (max 49 characters).", OP_ERR);
   }
 
   // prompt for programme
@@ -381,7 +385,8 @@ static OperationStatus insert(StudentDatabase *db) {
 
   // check programme length fits in StudentRecord
   if (prog_len >= 50) {
-    return report_error_and_return("Programme name is too long (max 49 characters).", OP_ERR);
+    return report_error_and_return(
+        "Programme name is too long (max 49 characters).", OP_ERR);
   }
 
   // prompt for mark
@@ -408,7 +413,8 @@ static OperationStatus insert(StudentDatabase *db) {
 
   // check for conversion errors
   if (*mark_endptr != '\0' || mark_endptr == mark_buf) {
-    return report_error_and_return("Invalid mark format. Please enter a number.", OP_ERR);
+    return report_error_and_return(
+        "Invalid mark format. Please enter a number.", OP_ERR);
   }
 
   // create student record
@@ -424,7 +430,8 @@ static OperationStatus insert(StudentDatabase *db) {
   ValidationStatus val_status = validate_record(&record);
   if (val_status != VALID_RECORD) {
     char err_msg[256];
-    snprintf(err_msg, sizeof err_msg, "Invalid record: %s", validation_error_string(val_status));
+    snprintf(err_msg, sizeof err_msg, "Invalid record: %s",
+             validation_error_string(val_status));
     return report_error_and_return(err_msg, OP_ERR);
   }
 
@@ -432,12 +439,14 @@ static OperationStatus insert(StudentDatabase *db) {
   DBStatus db_status = table_add_record(table, &record);
   if (db_status != DB_SUCCESS) {
     char err_msg[256];
-    snprintf(err_msg, sizeof err_msg, "Failed to insert record: %s", db_status_string(db_status));
+    snprintf(err_msg, sizeof err_msg, "Failed to insert record: %s",
+             db_status_string(db_status));
     return report_error_and_return(err_msg, OP_ERR);
   }
 
   // success - display message
-  printf("CMS: A new record with ID=%d is successfully inserted.\n", student_id);
+  printf("CMS: A new record with ID=%d is successfully inserted.\n",
+         student_id);
 
   wait_for_user();
 
@@ -458,9 +467,119 @@ OperationStatus update() {
   return OP_SUCCESS;
 }
 
-OperationStatus delete() {
-  // your code here
-  printf("you selected delete!\n");
+/*
+ * delete existing student record from database
+ * prompts user for student id, confirms deletion, and removes record
+ * returns: OP_SUCCESS on successful deletion or cancellation, OP_ERR on failure
+ */
+static OperationStatus delete(StudentDatabase *db) {
+  // validate database pointer
+  if (!db) {
+    return report_error_and_return("Database error.", OP_ERR);
+  }
+
+  // validate database is loaded
+  if (!db->is_loaded || db->table_count == 0) {
+    return report_error_and_return("Database not loaded.", OP_ERR);
+  }
+
+  // access the StudentRecords table
+  StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
+  if (!table) {
+    return report_error_and_return("Table error.", OP_ERR);
+  }
+
+  // check if table has records before prompting
+  if (table->record_count == 0) {
+    return report_error_and_return("No records available to delete.", OP_ERR);
+  }
+
+  // prompt for student id
+  char id_buf[256];
+  printf("Enter student ID: ");
+  fflush(stdout);
+
+  if (!fgets(id_buf, sizeof id_buf, stdin)) {
+    return report_error_and_return("Failed to read input.", OP_ERR);
+  }
+
+  // strip trailing newline/carriage return
+  size_t id_len = strcspn(id_buf, "\r\n");
+  id_buf[id_len] = '\0';
+
+  // validate ID is not empty
+  if (id_len == 0) {
+    return report_error_and_return("Student ID cannot be empty.", OP_ERR);
+  }
+
+  // parse ID using strtol for safe conversion with overflow detection
+  char *endptr;
+  errno = 0;
+  long id_long = strtol(id_buf, &endptr, 10);
+
+  // check for conversion errors and overflow
+  if (errno == ERANGE || *endptr != '\0' || endptr == id_buf) {
+    return report_error_and_return(
+        "Invalid student ID format. Please enter a number.", OP_ERR);
+  }
+
+  // check ID range (fits in int)
+  if (id_long < 0 || id_long > 9999999) {
+    return report_error_and_return("Student ID must be between 0 and 9999999.",
+                                   OP_ERR);
+  }
+
+  int student_id = (int)id_long;
+
+  // ask user to confirm deletion
+  char confirm[10];
+  printf("CMS: Are you sure you want to delete record with ID=%d? Type \"Y\" "
+         "to Confirm or type \"N\" to cancel.\n",
+         student_id);
+  fflush(stdout);
+
+  if (!fgets(confirm, sizeof confirm, stdin)) {
+    return report_error_and_return("Failed to read input.", OP_ERR);
+  }
+
+  // strip trailing newline/carriage return
+  size_t confirm_len = strcspn(confirm, "\r\n");
+  confirm[confirm_len] = '\0';
+
+  // validate confirmation input
+  if (confirm_len == 0 ||
+      (toupper(confirm[0]) != 'Y' && toupper(confirm[0]) != 'N')) {
+    return report_error_and_return("Invalid input. Operation cancelled.",
+                                   OP_ERR);
+  }
+
+  // handle cancellation
+  if (toupper(confirm[0]) == 'N') {
+    printf("CMS: The deletion is cancelled.\n");
+    wait_for_user();
+    return OP_SUCCESS;
+  }
+
+  // user confirmed - attempt to remove the record
+  DBStatus db_status = table_remove_record(table, student_id);
+
+  // handle record not found
+  if (db_status == DB_ERROR_NOT_FOUND) {
+    printf("CMS: The record with ID=%d does not exist.\n", student_id);
+    wait_for_user();
+    return OP_SUCCESS;
+  }
+
+  // handle other database errors
+  if (db_status != DB_SUCCESS) {
+    char err_msg[256];
+    snprintf(err_msg, sizeof err_msg, "Failed to delete record: %s",
+             db_status_string(db_status));
+    return report_error_and_return(err_msg, OP_ERR);
+  }
+
+  printf("CMS: The record with ID=%d is successfully deleted.\n", student_id);
+  wait_for_user();
 
   return OP_SUCCESS;
 }
@@ -483,7 +602,8 @@ static OperationStatus save(StudentDatabase *db) {
 
   // validate we have a filepath from OPEN
   if (db->filepath[0] == '\0') {
-    return report_error_and_return("No file path stored for this database.", OP_ERR);
+    return report_error_and_return("No file path stored for this database.",
+                                   OP_ERR);
   }
 
   // access the StudentRecords table (by convention, index 0)
@@ -500,8 +620,8 @@ static OperationStatus save(StudentDatabase *db) {
   FILE *fp = fopen(db->filepath, "w");
   if (!fp) {
     char err_msg[256];
-    snprintf(err_msg, sizeof(err_msg),
-             "Failed to open file '%s' for writing.", db->filepath);
+    snprintf(err_msg, sizeof(err_msg), "Failed to open file '%s' for writing.",
+             db->filepath);
     return report_error_and_return(err_msg, OP_ERR);
   }
 
@@ -523,8 +643,7 @@ static OperationStatus save(StudentDatabase *db) {
   // write all records (including inserted/updated ones)
   for (size_t i = 0; i < table->record_count; i++) {
     const StudentRecord *r = &table->records[i];
-    fprintf(fp, "%d\t%s\t%s\t%.2f\n",
-            r->id, r->name, r->prog, r->mark);
+    fprintf(fp, "%d\t%s\t%s\t%.2f\n", r->id, r->name, r->prog, r->mark);
   }
 
   if (fclose(fp) != 0) {
@@ -534,12 +653,12 @@ static OperationStatus save(StudentDatabase *db) {
     return report_error_and_return(err_msg, OP_ERR);
   }
 
-  printf("CMS: The database file \"%s\" is successfully saved.\n", db->filepath);
+  printf("CMS: The database file \"%s\" is successfully saved.\n",
+         db->filepath);
   wait_for_user();
 
   return OP_SUCCESS;
 }
-
 
 static OperationStatus operation_router(Operation op, StudentDatabase *db) {
   OperationStatus status;
@@ -561,7 +680,7 @@ static OperationStatus operation_router(Operation op, StudentDatabase *db) {
     status = update();
     return status;
   case DELETE:
-    status = delete();
+    status = delete(db);
     return status;
   case SAVE:
     status = save(db);
