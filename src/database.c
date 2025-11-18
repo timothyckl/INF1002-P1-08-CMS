@@ -107,6 +107,46 @@ DBStatus table_add_record(StudentTable *table, StudentRecord *record) {
 }
 
 /*
+ * remove record from table by student id
+ * returns: DB_SUCCESS on success, DB_ERROR_NOT_FOUND if id not found, error
+ * code on failure
+ */
+DBStatus table_remove_record(StudentTable *table, int student_id) {
+  if (!table) {
+    return DB_ERROR_NULL_POINTER;
+  }
+
+  // search for record with matching id using sentinel value pattern
+  size_t deleted_index = (size_t)-1;
+  for (size_t i = 0; i < table->record_count; i++) {
+    if (table->records[i].id == student_id) {
+      deleted_index = i;
+      break;
+    }
+  }
+
+  // check if record was found
+  if (deleted_index == (size_t)-1) {
+    return DB_ERROR_NOT_FOUND;
+  }
+
+  // delete record using safe array shifting
+  // only shift if deleted record is not the last element
+  if (deleted_index < table->record_count - 1) {
+    memmove(&table->records[deleted_index], &table->records[deleted_index + 1],
+            (table->record_count - deleted_index - 1) * sizeof(StudentRecord));
+  }
+
+  // decrement record count
+  table->record_count--;
+
+  // zero out the last element for safety
+  memset(&table->records[table->record_count], 0, sizeof(StudentRecord));
+
+  return DB_SUCCESS;
+}
+
+/*
  * initialise a new empty database
  * returns: pointer to database on success, NULL on failure
  */
