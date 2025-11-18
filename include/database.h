@@ -69,6 +69,7 @@ void table_free(StudentTable *table);
 DBStatus table_set_column_headers(StudentTable *table, char **headers,
                                   size_t count);
 DBStatus table_add_record(StudentTable *table, StudentRecord *record);
+DBStatus table_remove_record(StudentTable *table, int student_id);
 
 // database lifecycle
 StudentDatabase *db_init(void);
