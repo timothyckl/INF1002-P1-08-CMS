@@ -23,6 +23,7 @@ typedef enum {
   UPDATE,
   DELETE,
   SAVE,
+  SORT,
   EXIT,
 } Operation;
 
@@ -95,6 +96,106 @@ static OperationStatus report_error_and_return(const char *error_msg,
   printf("CMS: %s\n", error_msg);
   wait_for_user();
   return status;
+}
+
+/*
+ * sort student records using bubble sort algorithm
+ * sorts in-place by modifying the records array
+ * stable sort - maintains relative order of equal elements
+ */
+static void bubble_sort_records(StudentRecord *records, size_t count,
+                                 int (*compare)(const StudentRecord*, const StudentRecord*)) {
+  // defensive check
+  if (!records || count == 0 || !compare) {
+    return;
+  }
+
+  // bubble sort with early termination optimisation
+  for (size_t i = 0; i < count - 1; i++) {
+    int swapped = 0;
+
+    for (size_t j = 0; j < count - i - 1; j++) {
+      // compare adjacent elements
+      if (compare(&records[j], &records[j + 1]) > 0) {
+        // swap records
+        StudentRecord temp = records[j];
+        records[j] = records[j + 1];
+        records[j + 1] = temp;
+        swapped = 1;
+      }
+    }
+
+    // if no swaps occurred, array is sorted
+    if (!swapped) {
+      break;
+    }
+  }
+}
+
+/*
+ * compare student records by id in ascending order
+ * returns: negative if a < b, zero if a == b, positive if a > b
+ */
+static int compare_id_asc(const StudentRecord *a, const StudentRecord *b) {
+  // defensive null checks
+  if (!a || !b) return 0;
+
+  // safe comparison - avoid integer overflow from subtraction
+  if (a->id < b->id) return -1;
+  if (a->id > b->id) return 1;
+  return 0;
+}
+
+/*
+ * compare student records by id in descending order
+ * returns: negative if a > b, zero if a == b, positive if a < b
+ */
+static int compare_id_desc(const StudentRecord *a, const StudentRecord *b) {
+  // defensive null checks
+  if (!a || !b) return 0;
+
+  // independent implementation - not just reversed parameter order
+  if (a->id > b->id) return -1;
+  if (a->id < b->id) return 1;
+  return 0;
+}
+
+/*
+ * compare student records by mark in ascending order
+ * includes tie-breaker: sorts by id when marks are equal
+ * returns: negative if a < b, zero if a == b, positive if a > b
+ */
+static int compare_mark_asc(const StudentRecord *a, const StudentRecord *b) {
+  // defensive null checks
+  if (!a || !b) return 0;
+
+  // safe float comparison - validation ensures marks in [0.0, 100.0]
+  if (a->mark < b->mark) return -1;
+  if (a->mark > b->mark) return 1;
+
+  // tie-breaker: sort by id when marks are equal (ensures stable sort)
+  if (a->id < b->id) return -1;
+  if (a->id > b->id) return 1;
+  return 0;
+}
+
+/*
+ * compare student records by mark in descending order
+ * includes tie-breaker: sorts by id when marks are equal
+ * returns: negative if a > b, zero if a == b, positive if a < b
+ */
+static int compare_mark_desc(const StudentRecord *a, const StudentRecord *b) {
+  // defensive null checks
+  if (!a || !b) return 0;
+
+  // independent implementation with tie-breaker
+  if (a->mark > b->mark) return -1;
+  if (a->mark < b->mark) return 1;
+
+  // tie-breaker: sort by id when marks are equal
+  if (a->id < b->id) return -1;
+  if (a->id > b->id) return 1;
+  return 0;
 }
 
 // CMS operations (not to be confused with db operations)
@@ -585,6 +686,148 @@ static OperationStatus delete(StudentDatabase *db) {
 }
 
 /*
+ * sort student records by id or mark in ascending or descending order
+ * prompts user for sort field and order, then performs in-place sort
+ * returns: OP_SUCCESS on success, OP_ERR on failure
+ */
+static OperationStatus sort(StudentDatabase *db) {
+  // === VALIDATION SECTION ===
+  // validate database pointer
+  if (!db) {
+    return report_error_and_return("Database error.", OP_ERR);
+  }
+
+  // validate database is loaded
+  if (!db->is_loaded || db->table_count == 0) {
+    return report_error_and_return("Database not loaded.", OP_ERR);
+  }
+
+  // access the StudentRecords table
+  StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
+  if (!table) {
+    return report_error_and_return("Table error.", OP_ERR);
+  }
+
+  // validate records array exists
+  if (!table->records) {
+    return report_error_and_return("Table records array is NULL.", OP_ERR);
+  }
+
+  // validate record count is consistent
+  if (table->record_count > table->record_capacity) {
+    return report_error_and_return("Table record count exceeds capacity.", OP_ERR);
+  }
+
+  // === EMPTY TABLE CHECK ===
+  // check if table has records
+  if (table->record_count == 0) {
+    return report_error_and_return("No records available to sort.", OP_ERR);
+  }
+
+  // === FIELD SELECTION INPUT ===
+  char field_buf[10];
+  printf("Select field to sort by:\n");
+  printf("  [1] ID\n");
+  printf("  [2] Mark\n");
+  printf("Enter your choice (or press ENTER to cancel): ");
+  fflush(stdout);
+
+  if (!fgets(field_buf, sizeof field_buf, stdin)) {
+    return report_error_and_return("Failed to read input.", OP_ERR);
+  }
+
+  // strip trailing newline/carriage return
+  size_t field_len = strcspn(field_buf, "\r\n");
+  field_buf[field_len] = '\0';
+
+  // allow empty input to cancel
+  if (field_len == 0) {
+    printf("CMS: Sort operation cancelled.\n");
+    wait_for_user();
+    return OP_SUCCESS;
+  }
+
+  // validate field is exactly "1" or "2"
+  char field;
+  if (field_len == 1 && (field_buf[0] == '1' || field_buf[0] == '2')) {
+    field = field_buf[0];
+  } else {
+    return report_error_and_return(
+      "Invalid field. Enter '1' for ID or '2' for Mark.", OP_ERR);
+  }
+
+  // === ORDER SELECTION INPUT ===
+  char order_buf[10];
+  printf("Select sort order:\n");
+  printf("  [A] Ascending\n");
+  printf("  [D] Descending\n");
+  printf("Enter your choice (or press ENTER to cancel): ");
+  fflush(stdout);
+
+  if (!fgets(order_buf, sizeof order_buf, stdin)) {
+    return report_error_and_return("Failed to read input.", OP_ERR);
+  }
+
+  // strip trailing newline/carriage return
+  size_t order_len = strcspn(order_buf, "\r\n");
+  order_buf[order_len] = '\0';
+
+  // allow empty input to cancel
+  if (order_len == 0) {
+    printf("CMS: Sort operation cancelled.\n");
+    wait_for_user();
+    return OP_SUCCESS;
+  }
+
+  // validate order is exactly "A", "a", "D", or "d"
+  char order;
+  if (order_len == 1 &&
+      (toupper(order_buf[0]) == 'A' || toupper(order_buf[0]) == 'D')) {
+    order = toupper(order_buf[0]);
+  } else {
+    return report_error_and_return(
+      "Invalid order. Enter 'A' for Ascending or 'D' for Descending.", OP_ERR);
+  }
+
+  // === COMPARATOR SELECTION ===
+  // select appropriate comparator function based on field and order
+  int (*comparator)(const StudentRecord*, const StudentRecord*) = NULL;
+
+  if (field == '1' && order == 'A') {
+    comparator = compare_id_asc;
+  } else if (field == '1' && order == 'D') {
+    comparator = compare_id_desc;
+  } else if (field == '2' && order == 'A') {
+    comparator = compare_mark_asc;
+  } else if (field == '2' && order == 'D') {
+    comparator = compare_mark_desc;
+  }
+
+  // defensive check (should never happen given validation above)
+  if (!comparator) {
+    return report_error_and_return("Internal error: no comparator selected.", OP_ERR);
+  }
+
+  // === SORTING SECTION ===
+  // perform bubble sort using selected comparator
+  bubble_sort_records(table->records, table->record_count, comparator);
+
+  // === SUCCESS REPORTING ===
+  const char *field_name = (field == '1') ? "ID" : "Mark";
+  const char *order_name = (order == 'A') ? "ascending" : "descending";
+
+  printf("CMS: %zu record%s successfully sorted by %s in %s order.\n",
+         table->record_count,
+         (table->record_count == 1) ? "" : "s",
+         field_name,
+         order_name);
+
+  wait_for_user();
+
+  return OP_SUCCESS;
+}
+
+/*
  * save database to file
  * writes database metadata, table structure, and all records to filepath
  * returns: OP_SUCCESS on success, OP_ERR on failure
@@ -684,6 +927,9 @@ static OperationStatus operation_router(Operation op, StudentDatabase *db) {
     return status;
   case SAVE:
     status = save(db);
+    return status;
+  case SORT:
+    status = sort(db);
     return status;
   case EXIT:
     printf("Goodbye!\n");

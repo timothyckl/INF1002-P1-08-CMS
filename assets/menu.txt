@@ -9,7 +9,8 @@ Main Menu
 [4] QUERY: Search for a record in the database.  
 [5] UPDATE: Update a value for a given record. 
 [6] DELETE: Delete a record from the database.
-[7] SAVE: Save all records to the database file. 
-[8] EXIT: Exit the program.
+[7] SAVE: Save all records to the database file.
+[8] SORT: Sort records by ID or Mark in ascending or descending order.
+[9] EXIT: Exit the program.
 ==============================================================
 
