@@ -691,7 +691,6 @@ static OperationStatus delete(StudentDatabase *db) {
  * returns: OP_SUCCESS on success, OP_ERR on failure
  */
 static OperationStatus sort(StudentDatabase *db) {
-  // === VALIDATION SECTION ===
   // validate database pointer
   if (!db) {
     return report_error_and_return("Database error.", OP_ERR);
@@ -718,13 +717,11 @@ static OperationStatus sort(StudentDatabase *db) {
     return report_error_and_return("Table record count exceeds capacity.", OP_ERR);
   }
 
-  // === EMPTY TABLE CHECK ===
   // check if table has records
   if (table->record_count == 0) {
     return report_error_and_return("No records available to sort.", OP_ERR);
   }
 
-  // === FIELD SELECTION INPUT ===
   char field_buf[10];
   printf("Select field to sort by:\n");
   printf("  [1] ID\n");
@@ -756,7 +753,6 @@ static OperationStatus sort(StudentDatabase *db) {
       "Invalid field. Enter '1' for ID or '2' for Mark.", OP_ERR);
   }
 
-  // === ORDER SELECTION INPUT ===
   char order_buf[10];
   printf("Select sort order:\n");
   printf("  [A] Ascending\n");
@@ -789,7 +785,6 @@ static OperationStatus sort(StudentDatabase *db) {
       "Invalid order. Enter 'A' for Ascending or 'D' for Descending.", OP_ERR);
   }
 
-  // === COMPARATOR SELECTION ===
   // select appropriate comparator function based on field and order
   int (*comparator)(const StudentRecord*, const StudentRecord*) = NULL;
 
@@ -808,11 +803,9 @@ static OperationStatus sort(StudentDatabase *db) {
     return report_error_and_return("Internal error: no comparator selected.", OP_ERR);
   }
 
-  // === SORTING SECTION ===
   // perform bubble sort using selected comparator
   bubble_sort_records(table->records, table->record_count, comparator);
 
-  // === SUCCESS REPORTING ===
   const char *field_name = (field == '1') ? "ID" : "Mark";
   const char *order_name = (order == 'A') ? "ascending" : "descending";
 
