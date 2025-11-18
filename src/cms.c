@@ -1,5 +1,6 @@
 #include "cms.h"
 #include "database.h"
+#include "parser.h"
 #include "utils.h"
 #include <ctype.h>
 #include <stdlib.h>
@@ -272,10 +273,173 @@ static OperationStatus show_all(StudentDatabase *db) {
   return OP_SUCCESS;
 }
 
-OperationStatus insert() {
-  // your code here
-  // printf("you selected insert!\n");
-  printf("hi!\n");
+/*
+ * insert new student record into database
+ * prompts user for student details and validates input
+ * returns: OP_SUCCESS on successful insertion, OP_ERR on failure
+ */
+static OperationStatus insert(StudentDatabase *db) {
+  // validate database pointer
+  if (!db) {
+    return report_error_and_return("Database error.", OP_ERR);
+  }
+
+  // validate database is loaded
+  if (!db->is_loaded || db->table_count == 0) {
+    return report_error_and_return("Database not loaded.", OP_ERR);
+  }
+
+  // access the StudentRecords table
+  StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
+  if (!table) {
+    return report_error_and_return("Table error.", OP_ERR);
+  }
+
+  // prompt for student ID
+  char id_buf[256];
+  printf("Enter student ID: ");
+  fflush(stdout);
+
+  if (!fgets(id_buf, sizeof id_buf, stdin)) {
+    return report_error_and_return("Failed to read input.", OP_ERR);
+  }
+
+  // strip trailing newline/carriage return
+  size_t id_len = strcspn(id_buf, "\r\n");
+  id_buf[id_len] = '\0';
+
+  // validate ID is not empty
+  if (id_len == 0) {
+    return report_error_and_return("Student ID cannot be empty.", OP_ERR);
+  }
+
+  // parse ID using strtol for safe conversion
+  char *endptr;
+  long id_long = strtol(id_buf, &endptr, 10);
+
+  // check for conversion errors
+  if (*endptr != '\0' || endptr == id_buf) {
+    return report_error_and_return("Invalid student ID format. Please enter a number.", OP_ERR);
+  }
+
+  // check ID range (fits in int)
+  if (id_long < 0 || id_long > 9999999) {
+    return report_error_and_return("Student ID must be between 0 and 9999999.", OP_ERR);
+  }
+
+  int student_id = (int)id_long;
+
+  // check for duplicate ID
+  for (size_t i = 0; i < table->record_count; i++) {
+    if (table->records[i].id == student_id) {
+      char err_msg[256];
+      snprintf(err_msg, sizeof err_msg, "The record with ID=%d already exists.", student_id);
+      return report_error_and_return(err_msg, OP_ERR);
+    }
+  }
+
+  // prompt for student name
+  char name_buf[256];
+  printf("Enter student name: ");
+  fflush(stdout);
+
+  if (!fgets(name_buf, sizeof name_buf, stdin)) {
+    return report_error_and_return("Failed to read input.", OP_ERR);
+  }
+
+  // strip trailing newline/carriage return
+  size_t name_len = strcspn(name_buf, "\r\n");
+  name_buf[name_len] = '\0';
+
+  // validate name is not empty
+  if (name_len == 0) {
+    return report_error_and_return("Student name cannot be empty.", OP_ERR);
+  }
+
+  // check name length fits in StudentRecord
+  if (name_len >= 50) {
+    return report_error_and_return("Student name is too long (max 49 characters).", OP_ERR);
+  }
+
+  // prompt for programme
+  char prog_buf[256];
+  printf("Enter programme: ");
+  fflush(stdout);
+
+  if (!fgets(prog_buf, sizeof prog_buf, stdin)) {
+    return report_error_and_return("Failed to read input.", OP_ERR);
+  }
+
+  // strip trailing newline/carriage return
+  size_t prog_len = strcspn(prog_buf, "\r\n");
+  prog_buf[prog_len] = '\0';
+
+  // validate programme is not empty
+  if (prog_len == 0) {
+    return report_error_and_return("Programme cannot be empty.", OP_ERR);
+  }
+
+  // check programme length fits in StudentRecord
+  if (prog_len >= 50) {
+    return report_error_and_return("Programme name is too long (max 49 characters).", OP_ERR);
+  }
+
+  // prompt for mark
+  char mark_buf[256];
+  printf("Enter mark: ");
+  fflush(stdout);
+
+  if (!fgets(mark_buf, sizeof mark_buf, stdin)) {
+    return report_error_and_return("Failed to read input.", OP_ERR);
+  }
+
+  // strip trailing newline/carriage return
+  size_t mark_len = strcspn(mark_buf, "\r\n");
+  mark_buf[mark_len] = '\0';
+
+  // validate mark is not empty
+  if (mark_len == 0) {
+    return report_error_and_return("Mark cannot be empty.", OP_ERR);
+  }
+
+  // parse mark using strtof for safe conversion
+  char *mark_endptr;
+  float mark = strtof(mark_buf, &mark_endptr);
+
+  // check for conversion errors
+  if (*mark_endptr != '\0' || mark_endptr == mark_buf) {
+    return report_error_and_return("Invalid mark format. Please enter a number.", OP_ERR);
+  }
+
+  // create student record
+  StudentRecord record;
+  record.id = student_id;
+  strncpy(record.name, name_buf, sizeof record.name - 1);
+  record.name[sizeof record.name - 1] = '\0';
+  strncpy(record.prog, prog_buf, sizeof record.prog - 1);
+  record.prog[sizeof record.prog - 1] = '\0';
+  record.mark = mark;
+
+  // validate record using existing validation function
+  ValidationStatus val_status = validate_record(&record);
+  if (val_status != VALID_RECORD) {
+    char err_msg[256];
+    snprintf(err_msg, sizeof err_msg, "Invalid record: %s", validation_error_string(val_status));
+    return report_error_and_return(err_msg, OP_ERR);
+  }
+
+  // insert record into table
+  DBStatus db_status = table_add_record(table, &record);
+  if (db_status != DB_SUCCESS) {
+    char err_msg[256];
+    snprintf(err_msg, sizeof err_msg, "Failed to insert record: %s", db_status_string(db_status));
+    return report_error_and_return(err_msg, OP_ERR);
+  }
+
+  // success - display message
+  printf("CMS: A new record with ID=%d is successfully inserted.\n", student_id);
+
+  wait_for_user();
 
   return OP_SUCCESS;
 }
@@ -388,7 +552,7 @@ static OperationStatus operation_router(Operation op, StudentDatabase *db) {
     status = show_all(db);
     return status;
   case INSERT:
-    status = insert();
+    status = insert(db);
     return status;
   case QUERY:
     status = query();
