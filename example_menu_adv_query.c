@@ -1,29 +1,12 @@
-/*
- * example_menu_adv_query.c
- *
- * Interactive menu harness for testing QUERY and ADV QUERY operations.
- * Provides a simple menu interface to test both basic and advanced query
- * functionality with user input.
- *
- * Build command:
- *   gcc -Iinclude -Wall -Wextra -g src/database.c src/parser.c src/cms.c src/utils.c src/adv_query.c tests/example_menu_adv_query.c -o build/example_menu_adv_query.exe
- *
- * Run command:
- *   .\build\example_menu_adv_query.exe
- */
-
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "adv_query.h"
-#include "database.h"
 
-#define MENU_BUF 256
 #define INPUT_BUF 256
 #define MAX_SELECTIONS 8
-#define DEFAULT_DATA_FILE "data/P1_8-CMS.txt"
 
 typedef struct {
   int field; // 1=ID, 2=Name, 3=Programme, 4=Mark
@@ -31,31 +14,14 @@ typedef struct {
   char value[INPUT_BUF];
 } QuerySelection;
 
-static void wait_for_enter(void) {
-  char buffer[MENU_BUF];
-  printf("\nPress Enter to continue...");
-  (void)fgets(buffer, sizeof buffer, stdin);
-}
-
-static void print_menu(void) {
-  puts("==============================================================");
-  puts("Class Management System (Query Harness)");
-  puts("");
-  puts("Main Menu");
-  puts("");
-  puts("[1] OPEN: Opens the database file and loads records.");
-  puts("[2] QUERY: Search for a single record by ID.");
-  puts("[3] ADV QUERY: Run the advanced search pipeline.");
-  puts("[4] EXIT: Exit the harness.");
-  puts("==============================================================");
-}
-
 static void trim_newline(char *text) {
   if (!text) {
     return;
   }
-  size_t len = strcspn(text, "\r\n");
-  text[len] = '\0';
+  size_t len = strlen(text);
+  if (len > 0 && text[len - 1] == '\n') {
+    text[len - 1] = '\0';
+  }
 }
 
 static int read_line(const char *prompt, char *buffer, size_t size) {
@@ -78,39 +44,6 @@ static int prompt_int(const char *prompt, int *out_value) {
     return -1;
   }
   *out_value = (int)parsed;
-  return 1;
-}
-
-static int prompt_path(char *buffer, size_t size) {
-  printf("Enter a file path (press ENTER for default data file): ");
-  fflush(stdout);
-  if (!fgets(buffer, (int)size, stdin)) {
-    return 0;
-  }
-  trim_newline(buffer);
-  if (buffer[0] == '\0') {
-    snprintf(buffer, size, "%s", DEFAULT_DATA_FILE);
-  }
-  return 1;
-}
-
-static int prompt_id(int *out_id) {
-  char buf[MENU_BUF];
-  printf("Enter student ID to search: ");
-  fflush(stdout);
-  if (!fgets(buf, sizeof buf, stdin)) {
-    return 0;
-  }
-  trim_newline(buf);
-  if (buf[0] == '\0') {
-    return -1;
-  }
-  char *endptr = NULL;
-  long parsed = strtol(buf, &endptr, 10);
-  if (endptr == buf || *endptr != '\0') {
-    return -1;
-  }
-  *out_id = (int)parsed;
   return 1;
 }
 
@@ -213,7 +146,13 @@ static void prompt_mark_value(char *output, size_t size) {
       continue;
     }
     if (buffer[0] == '\0') {
-      printf("Mark cannot be empty.\n");
+      printf("Input cannot be empty.\n");
+      continue;
+    }
+    char *endptr = NULL;
+    strtod(buffer, &endptr);
+    if (endptr == buffer || *endptr != '\0') {
+      printf("Please enter a numeric value.\n");
       continue;
     }
     strncpy(output, buffer, size - 1);
@@ -222,40 +161,38 @@ static void prompt_mark_value(char *output, size_t size) {
   }
 }
 
-static const char *field_token(int field_choice) {
-  switch (field_choice) {
+static const char *field_token(int field) {
+  switch (field) {
   case 1:
     return "ID";
   case 2:
     return "NAME";
   case 3:
     return "PROGRAMME";
-  case 4:
-    return "MARK";
   default:
     return "";
   }
 }
 
-static const char *field_label(int field_choice) {
-  switch (field_choice) {
+static const char *field_label(int field) {
+  switch (field) {
   case 1:
-    return "Student ID";
+    return "student ID";
   case 2:
-    return "Name";
+    return "name";
   case 3:
-    return "Programme";
+    return "programme";
   case 4:
-    return "Mark";
+    return "mark";
   default:
-    return "Unknown";
+    return "field";
   }
 }
 
 static int field_already_selected(const QuerySelection *selections,
-                                  size_t count, int field_choice) {
+                                  size_t count, int field) {
   for (size_t i = 0; i < count; i++) {
-    if (selections[i].field == field_choice) {
+    if (selections[i].field == field) {
       return 1;
     }
   }
@@ -329,64 +266,10 @@ static void build_pipeline(const QuerySelection *selections, size_t count,
   }
 }
 
-static void run_query(StudentDatabase *db) {
-  if (!db || db->table_count == 0) {
-    printf("CMS: Please OPEN the database before querying.\n");
-    wait_for_enter();
-    return;
-  }
-
-  int id = 0;
-  int rc = prompt_id(&id);
-  if (rc <= 0) {
-    printf("CMS: Invalid student ID input.\n");
-    wait_for_enter();
-    return;
-  }
-
-  // search for record with matching ID
-  StudentRecord *record = NULL;
-  for (size_t t = 0; t < db->table_count; t++) {
-    StudentTable *table = db->tables[t];
-    if (!table) {
-      continue;
-    }
-
-    for (size_t r = 0; r < table->record_count; r++) {
-      if (table->records[r].id == id) {
-        record = &table->records[r];
-        break;
-      }
-    }
-    if (record) {
-      break;
-    }
-  }
-
-  if (!record) {
-    printf("CMS: The record with ID=%d does not exist.\n", id);
-    wait_for_enter();
-    return;
-  }
-
-  printf("CMS: Record found.\n\n");
-  printf("ID\tName\tProgramme\tMark\n");
-  printf("%d\t%s\t%s\t%.2f\n", record->id, record->name, record->prog,
-         record->mark);
-  wait_for_enter();
-}
-
-static void run_adv_query(StudentDatabase *db) {
-  if (!db || db->table_count == 0) {
-    printf("CMS: Please OPEN the database before running advanced query.\n");
-    wait_for_enter();
-    return;
-  }
-
+static void run_advanced_search(StudentDatabase *db) {
   QuerySelection selections[MAX_SELECTIONS];
   size_t selection_count = 0;
   if (!collect_field_selections(selections, &selection_count)) {
-    wait_for_enter();
     return;
   }
 
@@ -397,71 +280,47 @@ static void run_adv_query(StudentDatabase *db) {
 
   AdvQueryStatus status = adv_query_execute(db, pipeline);
   if (status != ADV_QUERY_OK) {
-    printf("CMS: Advanced query failed: %s\n",
-           adv_query_status_string(status));
+    printf("Advanced search failed: %s\n", adv_query_status_string(status));
   }
-
-  wait_for_enter();
 }
 
 int main(void) {
+  printf("Advanced search harness\n");
+
   StudentDatabase *db = db_init();
   if (!db) {
     fprintf(stderr, "Failed to initialise database.\n");
     return EXIT_FAILURE;
   }
 
+  DBStatus status = db_load(db, "data/P1_8-CMS.txt");
+  if (status != DB_SUCCESS) {
+    fprintf(stderr, "Failed to load database: %s\n", db_status_string(status));
+    db_free(db);
+    return EXIT_FAILURE;
+  }
+
   int running = 1;
   while (running) {
-    print_menu();
-    printf("Select an option: ");
-    fflush(stdout);
-
-    char buf[MENU_BUF];
-    if (!fgets(buf, sizeof buf, stdin)) {
+    printf("\nMenu\n");
+    printf(" 1) Advanced search\n");
+    printf(" 2) Exit\n");
+    int option = 0;
+    int rc = prompt_int("Select option: ", &option);
+    if (rc == 0 || (rc == 1 && option == 2)) {
       break;
     }
-    int choice = atoi(buf);
-
-    switch (choice) {
-    case 1: {
-      char path[MENU_BUF];
-      if (!prompt_path(path, sizeof path)) {
-        printf("CMS: Failed to read file path.\n");
-        wait_for_enter();
-        break;
-      }
-      DBStatus status = db_load(db, path);
-      if (status != DB_SUCCESS) {
-        printf("CMS: Failed to load database: %s\n",
-               db_status_string(status));
-      } else {
-        db->is_loaded = true;
-        strncpy(db->filepath, path, sizeof db->filepath);
-        db->filepath[sizeof db->filepath - 1] = '\0';
-        printf("CMS: The database file \"%s\" is successfully opened.\n",
-               path);
-      }
-      wait_for_enter();
-      break;
+    if (rc != 1) {
+      printf("Enter a number.\n");
+      continue;
     }
-    case 2:
-      run_query(db);
-      break;
-    case 3:
-      run_adv_query(db);
-      break;
-    case 4:
-      running = 0;
-      break;
-    default:
-      printf("CMS: Invalid option. Please select between 1 and 4.\n");
-      wait_for_enter();
-      break;
+    if (option == 1) {
+      run_advanced_search(db);
+    } else {
+      printf("Choose 1 or 2.\n");
     }
   }
 
   db_free(db);
   return EXIT_SUCCESS;
 }
-

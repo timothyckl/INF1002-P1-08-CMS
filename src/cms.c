@@ -1,3 +1,4 @@
+#include "adv_query.h"
 #include "cms.h"
 #include "database.h"
 #include "parser.h"
@@ -26,6 +27,7 @@ typedef enum {
   SAVE,
   SORT,
   EXIT,
+  ADV_QUERY = 10,
 } Operation;
 
 typedef enum {
@@ -647,6 +649,47 @@ static OperationStatus query(StudentDatabase *db) {
   return OP_SUCCESS;
 }
 
+static OperationStatus adv_query(StudentDatabase *db) {
+  if (!db) {
+    return report_error_and_return("Database error.", OP_ERR);
+  }
+  if (!db->is_loaded || db->table_count == 0) {
+    printf("CMS: Please OPEN the database before running advanced query.\n");
+    wait_for_user();
+    return OP_SUCCESS;
+  }
+
+  char pipeline[256];
+  printf("Enter pipeline (e.g. GREP NAME = Ann | MARK > 60): ");
+  fflush(stdout);
+
+  if (!fgets(pipeline, sizeof pipeline, stdin)) {
+    printf("CMS: Failed to read pipeline.\n");
+    wait_for_user();
+    return OP_ERR;
+  }
+
+  size_t len = strcspn(pipeline, "\r\n");
+  pipeline[len] = '\0';
+
+  if (len == 0) {
+    printf("CMS: Advanced query pipeline cannot be empty.\n");
+    wait_for_user();
+    return OP_ERR;
+  }
+
+  AdvQueryStatus adv_status = adv_query_execute(db, pipeline);
+  if (adv_status != ADV_QUERY_OK) {
+    printf("CMS: Advanced query failed: %s\n",
+           adv_query_status_string(adv_status));
+    wait_for_user();
+    return OP_ERR;
+  }
+
+  wait_for_user();
+  return OP_SUCCESS;
+}
+
 OperationStatus update() {
   // your code here
   printf("you selected update!\n");
@@ -1009,6 +1052,9 @@ static OperationStatus operation_router(Operation op, StudentDatabase *db) {
     return status;
   case SORT:
     status = sort(db);
+    return status;
+  case ADV_QUERY:
+    status = adv_query(db);
     return status;
   case EXIT:
     printf("Goodbye!\n");
