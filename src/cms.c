@@ -653,32 +653,12 @@ static OperationStatus adv_query(StudentDatabase *db) {
   if (!db) {
     return report_error_and_return("Database error.", OP_ERR);
   }
-  if (!db->is_loaded || db->table_count == 0) {
-    printf("CMS: Please OPEN the database before running advanced query.\n");
+  // guided prompt that builds a GREP/MARK pipeline then runs adv query
+  AdvQueryStatus adv_status = adv_query_run_prompt(db);
+  if (adv_status == ADV_QUERY_ERROR_EMPTY_DATABASE) {
     wait_for_user();
     return OP_SUCCESS;
   }
-
-  char pipeline[256];
-  printf("Enter pipeline (e.g. GREP NAME = Ann | MARK > 60): ");
-  fflush(stdout);
-
-  if (!fgets(pipeline, sizeof pipeline, stdin)) {
-    printf("CMS: Failed to read pipeline.\n");
-    wait_for_user();
-    return OP_ERR;
-  }
-
-  size_t len = strcspn(pipeline, "\r\n");
-  pipeline[len] = '\0';
-
-  if (len == 0) {
-    printf("CMS: Advanced query pipeline cannot be empty.\n");
-    wait_for_user();
-    return OP_ERR;
-  }
-
-  AdvQueryStatus adv_status = adv_query_execute(db, pipeline);
   if (adv_status != ADV_QUERY_OK) {
     printf("CMS: Advanced query failed: %s\n",
            adv_query_status_string(adv_status));
@@ -984,7 +964,7 @@ static OperationStatus save(StudentDatabase *db) {
 
   FILE *fp = fopen(db->filepath, "w");
   if (!fp) {
-    char err_msg[256];
+    char err_msg[512];
     snprintf(err_msg, sizeof(err_msg), "Failed to open file '%s' for writing.",
              db->filepath);
     return report_error_and_return(err_msg, OP_ERR);
@@ -1012,7 +992,7 @@ static OperationStatus save(StudentDatabase *db) {
   }
 
   if (fclose(fp) != 0) {
-    char err_msg[256];
+    char err_msg[512];
     snprintf(err_msg, sizeof(err_msg),
              "Failed to close file '%s' after writing.", db->filepath);
     return report_error_and_return(err_msg, OP_ERR);
@@ -1100,6 +1080,7 @@ CMSStatus main_loop(void) {
     //   operation_status_string(op_status)); return status;
     // }
     op_status = operation_router(op, db);
+    (void)op_status;
     // if (op_status != OP_SUCCESS) {
     //   fprintf(stderr, "Failed to perform operation: %s\n",
     //   operation_status_string(op_status)); return status;

@@ -14,6 +14,7 @@ typedef enum {
 
 AdvQueryStatus adv_query_execute(StudentDatabase *db, const char *pipeline);
 const char *adv_query_status_string(AdvQueryStatus status);
+AdvQueryStatus adv_query_run_prompt(StudentDatabase *db);
 
 #endif
 

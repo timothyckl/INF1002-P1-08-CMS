@@ -15,21 +15,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "adv_query.h"
 #include "database.h"
 
 #define MENU_BUF 256
-#define INPUT_BUF 256
-#define MAX_SELECTIONS 8
 #define DEFAULT_DATA_FILE "data/P1_8-CMS.txt"
-
-typedef struct {
-  int field; // 1=ID, 2=Name, 3=Programme, 4=Mark
-  char op;   // only used for Mark comparisons
-  char value[INPUT_BUF];
-} QuerySelection;
 
 static void wait_for_enter(void) {
   char buffer[MENU_BUF];
@@ -56,29 +47,6 @@ static void trim_newline(char *text) {
   }
   size_t len = strcspn(text, "\r\n");
   text[len] = '\0';
-}
-
-static int read_line(const char *prompt, char *buffer, size_t size) {
-  printf("%s", prompt);
-  if (!fgets(buffer, size, stdin)) {
-    return 0;
-  }
-  trim_newline(buffer);
-  return 1;
-}
-
-static int prompt_int(const char *prompt, int *out_value) {
-  char buffer[INPUT_BUF];
-  if (!read_line(prompt, buffer, sizeof(buffer))) {
-    return 0;
-  }
-  char *endptr = NULL;
-  long parsed = strtol(buffer, &endptr, 10);
-  if (endptr == buffer || *endptr != '\0') {
-    return -1;
-  }
-  *out_value = (int)parsed;
-  return 1;
 }
 
 static int prompt_path(char *buffer, size_t size) {
@@ -112,221 +80,6 @@ static int prompt_id(int *out_id) {
   }
   *out_id = (int)parsed;
   return 1;
-}
-
-static int prompt_field_choice(void) {
-  while (1) {
-    printf("\nPick a field to filter:\n");
-    printf(" 1) Student ID\n");
-    printf(" 2) Name\n");
-    printf(" 3) Programme\n");
-    printf(" 4) Mark\n");
-    printf(" 0) Cancel\n");
-    int choice = 0;
-    int rc = prompt_int("Select option: ", &choice);
-    if (rc == 0) {
-      return 0;
-    }
-    if (rc == 1 && choice >= 0 && choice <= 4) {
-      return choice;
-    }
-    printf("Invalid choice. Try again.\n");
-  }
-}
-
-static int prompt_yes_no(const char *prompt) {
-  char buffer[INPUT_BUF];
-  while (1) {
-    if (!read_line(prompt, buffer, sizeof(buffer))) {
-      return 0;
-    }
-    if (buffer[0] == '\0') {
-      continue;
-    }
-    char c = (char)tolower((unsigned char)buffer[0]);
-    if (c == 'y') {
-      return 1;
-    }
-    if (c == 'n') {
-      return 0;
-    }
-    printf("Please enter Y or N.\n");
-  }
-}
-
-static void sanitize_quotes(char *text) {
-  for (char *cursor = text; *cursor; cursor++) {
-    if (*cursor == '"') {
-      *cursor = '\'';
-    }
-  }
-}
-
-static void prompt_text_value(const char *label, char *output, size_t size) {
-  char buffer[INPUT_BUF];
-  while (1) {
-    char prompt[64];
-    snprintf(prompt, sizeof(prompt), "Enter %s to search: ", label);
-    if (!read_line(prompt, buffer, sizeof(buffer))) {
-      continue;
-    }
-    if (buffer[0] == '\0') {
-      printf("Input cannot be empty.\n");
-      continue;
-    }
-    sanitize_quotes(buffer);
-    strncpy(output, buffer, size - 1);
-    output[size - 1] = '\0';
-    break;
-  }
-}
-
-static char prompt_mark_operator(void) {
-  while (1) {
-    printf("\nMark comparison\n");
-    printf(" 1) Greater than\n");
-    printf(" 2) Less than\n");
-    printf(" 3) Equal to\n");
-    int choice = 0;
-    int rc = prompt_int("Select option: ", &choice);
-    if (rc != 1) {
-      printf("Please enter 1, 2, or 3.\n");
-      continue;
-    }
-    if (choice == 1) {
-      return '>';
-    }
-    if (choice == 2) {
-      return '<';
-    }
-    if (choice == 3) {
-      return '=';
-    }
-    printf("Please enter 1, 2, or 3.\n");
-  }
-}
-
-static void prompt_mark_value(char *output, size_t size) {
-  char buffer[INPUT_BUF];
-  while (1) {
-    if (!read_line("Enter mark value: ", buffer, sizeof(buffer))) {
-      continue;
-    }
-    if (buffer[0] == '\0') {
-      printf("Mark cannot be empty.\n");
-      continue;
-    }
-    strncpy(output, buffer, size - 1);
-    output[size - 1] = '\0';
-    break;
-  }
-}
-
-static const char *field_token(int field_choice) {
-  switch (field_choice) {
-  case 1:
-    return "ID";
-  case 2:
-    return "NAME";
-  case 3:
-    return "PROGRAMME";
-  case 4:
-    return "MARK";
-  default:
-    return "";
-  }
-}
-
-static const char *field_label(int field_choice) {
-  switch (field_choice) {
-  case 1:
-    return "Student ID";
-  case 2:
-    return "Name";
-  case 3:
-    return "Programme";
-  case 4:
-    return "Mark";
-  default:
-    return "Unknown";
-  }
-}
-
-static int field_already_selected(const QuerySelection *selections,
-                                  size_t count, int field_choice) {
-  for (size_t i = 0; i < count; i++) {
-    if (selections[i].field == field_choice) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-static int collect_field_selections(QuerySelection *selections,
-                                    size_t *selection_count) {
-  size_t count = 0;
-  while (count < MAX_SELECTIONS) {
-    int choice = prompt_field_choice();
-    if (choice == 0) {
-      if (count == 0) {
-        printf("Cancelled advanced search.\n");
-        return 0;
-      }
-      printf("Use the Y/N prompt to finish.\n");
-      continue;
-    }
-    if (field_already_selected(selections, count, choice)) {
-      printf("You already selected %s. Pick another field.\n",
-             field_label(choice));
-      continue;
-    }
-    selections[count].field = choice;
-    selections[count].op = '=';
-    selections[count].value[0] = '\0';
-    count++;
-
-    if (count >= MAX_SELECTIONS) {
-      printf("Reached maximum number of fields (%d).\n", MAX_SELECTIONS);
-      break;
-    }
-    if (!prompt_yes_no("Add another field? (Y/N): ")) {
-      break;
-    }
-  }
-
-  *selection_count = count;
-  return count > 0;
-}
-
-static void collect_field_values(QuerySelection *selections, size_t count) {
-  for (size_t i = 0; i < count; i++) {
-    if (selections[i].field == 4) {
-      selections[i].op = prompt_mark_operator();
-      prompt_mark_value(selections[i].value, sizeof(selections[i].value));
-    } else {
-      prompt_text_value(field_label(selections[i].field),
-                        selections[i].value, sizeof(selections[i].value));
-    }
-  }
-}
-
-static void build_pipeline(const QuerySelection *selections, size_t count,
-                           char *pipeline, size_t size) {
-  pipeline[0] = '\0';
-  for (size_t i = 0; i < count; i++) {
-    char stage[INPUT_BUF * 2];
-    if (selections[i].field == 4) {
-      snprintf(stage, sizeof(stage), "MARK %c %s", selections[i].op,
-               selections[i].value);
-    } else {
-      snprintf(stage, sizeof(stage), "GREP %s = \"%s\"",
-               field_token(selections[i].field), selections[i].value);
-    }
-    if (pipeline[0] != '\0') {
-      strncat(pipeline, " | ", size - strlen(pipeline) - 1);
-    }
-    strncat(pipeline, stage, size - strlen(pipeline) - 1);
-  }
 }
 
 static void run_query(StudentDatabase *db) {
@@ -383,19 +136,8 @@ static void run_adv_query(StudentDatabase *db) {
     return;
   }
 
-  QuerySelection selections[MAX_SELECTIONS];
-  size_t selection_count = 0;
-  if (!collect_field_selections(selections, &selection_count)) {
-    wait_for_enter();
-    return;
-  }
-
-  collect_field_values(selections, selection_count);
-
-  char pipeline[INPUT_BUF * MAX_SELECTIONS] = {0};
-  build_pipeline(selections, selection_count, pipeline, sizeof(pipeline));
-
-  AdvQueryStatus status = adv_query_execute(db, pipeline);
+  // guided prompt that builds and executes the pipeline for the user
+  AdvQueryStatus status = adv_query_run_prompt(db);
   if (status != ADV_QUERY_OK) {
     printf("CMS: Advanced query failed: %s\n",
            adv_query_status_string(status));
