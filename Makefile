@@ -8,8 +8,9 @@ SRC_DIR := src
 BUILD_DIR := build
 
 # Sources and header files
-SRCS := $(wildcard $(SRC_DIR)/*.c)
-HDRS := $(wildcard include/*.h)
+CMD_SRCS := $(wildcard $(SRC_DIR)/commands/*.c)
+SRCS := $(wildcard $(SRC_DIR)/*.c) $(CMD_SRCS)
+HDRS := $(wildcard include/*.h include/commands/*.h)
 LIB_SRCS := $(filter-out $(SRC_DIR)/main.c,$(SRCS))
 
 # Tests
