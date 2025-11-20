@@ -637,22 +637,27 @@ static OpStatus adv_query(StudentDatabase *db) {
   return OP_SUCCESS;
 }
 
-// Update record using ID
-static OperationStatus update(StudentDatabase *db) {
+/*
+ * update existing student record in database
+ * prompts user for student id, field selection, and new value
+ * returns: OP_SUCCESS on successful update or cancellation, OpStatus error
+ * code on failure
+ */
+static OpStatus update(StudentDatabase *db) {
   // validate database pointer
   if (!db) {
-    return report_error_and_return("Database error.", OP_ERR);
+    return report_error_and_return("Database error.", OP_ERROR_GENERAL);
   }
 
   // ensure database is loaded
   if (!db->is_loaded || db->table_count == 0) {
-    return report_error_and_return("Database not loaded.", OP_ERR);
+    return report_error_and_return("Database not loaded.", OP_ERROR_DB_NOT_LOADED);
   }
 
   // retrieve student table reference
   StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
   if (!table) {
-    return report_error_and_return("Table error.", OP_ERR);
+    return report_error_and_return("Table error.", OP_ERROR_GENERAL);
   }
 
   // check for empty table
@@ -668,30 +673,29 @@ static OperationStatus update(StudentDatabase *db) {
   fflush(stdout);
 
   if (!fgets(input_buf, sizeof input_buf, stdin)) {
-    return report_error_and_return("Failed to read input.", OP_ERR);
+    return report_error_and_return("Failed to read input.", OP_ERROR_INPUT);
   }
 
   size_t len = strcspn(input_buf, "\r\n");
   input_buf[len] = '\0';
 
   if (len == 0) {
-    printf("CMS: Student ID cannot be empty.\n");
-    wait_for_user();
-    return OP_ERR;
+    return report_error_and_return("Student ID cannot be empty.",
+                                   OP_ERROR_VALIDATION);
   }
 
   char *endptr = NULL;
   long parsed_id = strtol(input_buf, &endptr, 10);
   if (endptr == input_buf || *endptr != '\0') {
-    printf("CMS: Please enter a numeric student ID.\n");
-    wait_for_user();
-    return OP_ERR;
+    return report_error_and_return("Please enter a numeric student ID.",
+                                   OP_ERROR_VALIDATION);
   }
 
   if (parsed_id < 0 || parsed_id > INT_MAX) {
-    printf("CMS: Student ID must be within 0 to %d.\n", INT_MAX);
-    wait_for_user();
-    return OP_ERR;
+    char err_msg[128];
+    snprintf(err_msg, sizeof err_msg,
+             "Student ID must be within 0 to %d.", INT_MAX);
+    return report_error_and_return(err_msg, OP_ERROR_VALIDATION);
   }
 
   // search for record (same logic as QUERY)
@@ -720,14 +724,14 @@ static OperationStatus update(StudentDatabase *db) {
 
   char choice_buf[16];
   if (!fgets(choice_buf, sizeof choice_buf, stdin)) {
-    return report_error_and_return("Failed to read input.", OP_ERR);
+    return report_error_and_return("Failed to read input.", OP_ERROR_INPUT);
   }
 
   size_t choice_len = strcspn(choice_buf, "\r\n");
   choice_buf[choice_len] = '\0';
 
   if (choice_len != 1 || (choice_buf[0] < '1' || choice_buf[0] > '3')) {
-    return report_error_and_return("Invalid choice.", OP_ERR);
+    return report_error_and_return("Invalid choice.", OP_ERROR_VALIDATION);
   }
 
   int choice = choice_buf[0] - '0';
@@ -743,12 +747,12 @@ static OperationStatus update(StudentDatabase *db) {
     printf("Enter new Name: ");
     fflush(stdout);
     if (!fgets(buffer, sizeof buffer, stdin)) {
-      return report_error_and_return("Failed to read name.", OP_ERR);
+      return report_error_and_return("Failed to read name.", OP_ERROR_INPUT);
     }
     size_t nlen = strcspn(buffer, "\r\n");
     buffer[nlen] = '\0';
     if (nlen == 0) {
-      return report_error_and_return("Name cannot be empty.", OP_ERR);
+      return report_error_and_return("Name cannot be empty.", OP_ERROR_VALIDATION);
     }
     new_name = buffer;
 
@@ -756,12 +760,12 @@ static OperationStatus update(StudentDatabase *db) {
     printf("Enter new Programme: ");
     fflush(stdout);
     if (!fgets(buffer, sizeof buffer, stdin)) {
-      return report_error_and_return("Failed to read programme.", OP_ERR);
+      return report_error_and_return("Failed to read programme.", OP_ERROR_INPUT);
     }
     size_t plen = strcspn(buffer, "\r\n");
     buffer[plen] = '\0';
     if (plen == 0) {
-      return report_error_and_return("Programme cannot be empty.", OP_ERR);
+      return report_error_and_return("Programme cannot be empty.", OP_ERROR_VALIDATION);
     }
     new_prog = buffer;
 
@@ -771,13 +775,17 @@ static OperationStatus update(StudentDatabase *db) {
 
     char mark_buf[64];
     if (!fgets(mark_buf, sizeof mark_buf, stdin)) {
-      return report_error_and_return("Failed to read mark.", OP_ERR);
+      return report_error_and_return("Failed to read mark.", OP_ERROR_INPUT);
     }
+
+    // strip trailing newline/carriage return
+    size_t mark_len = strcspn(mark_buf, "\r\n");
+    mark_buf[mark_len] = '\0';
 
     char *m_endptr;
     new_mark = strtof(mark_buf, &m_endptr);
     if (m_endptr == mark_buf || *m_endptr != '\0') {
-      return report_error_and_return("Invalid mark entered.", OP_ERR);
+      return report_error_and_return("Invalid mark entered.", OP_ERROR_VALIDATION);
     }
     new_mark_ptr = &new_mark;
   }
@@ -787,10 +795,10 @@ static OperationStatus update(StudentDatabase *db) {
       db_update_record(db, (int)parsed_id, new_name, new_prog, new_mark_ptr);
 
   if (db_status != DB_SUCCESS) {
-    printf("CMS: Failed to update record (error: %s).\n",
-           db_status_string(db_status));
-    wait_for_user();
-    return OP_ERR;
+    char err_msg[256];
+    snprintf(err_msg, sizeof err_msg, "Failed to update record (error: %s).",
+             db_status_string(db_status));
+    return report_error_and_return(err_msg, OP_ERROR_GENERAL);
   }
 
   printf("CMS: The record with ID=%d is successfully updated.\n",
