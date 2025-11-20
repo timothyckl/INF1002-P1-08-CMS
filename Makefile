@@ -15,13 +15,14 @@ LIB_SRCS := $(filter-out $(SRC_DIR)/main.c,$(SRCS))
 
 # Tests
 TEST_DIR := tests
-TEST_SRCS := $(wildcard $(TEST_DIR)/*.c)
+TEST_SRCS := $(filter-out $(TEST_DIR)/test_utils.c,$(wildcard $(TEST_DIR)/*.c))
+TEST_UTILS := $(TEST_DIR)/test_utils.c
 TEST_BINS := $(patsubst $(TEST_DIR)/%.c,$(BUILD_DIR)/%,$(TEST_SRCS))
 
 # Executable
 TARGET := $(BUILD_DIR)/main
 
-.PHONY: all run tests clean
+.PHONY: all run tests test test-all clean
 
 # Default target
 all: $(TARGET)
@@ -33,8 +34,25 @@ $(TARGET): $(SRCS) $(HDRS) | $(BUILD_DIR)
 # Build all test harnesses
 tests: $(TEST_BINS)
 
-$(BUILD_DIR)/%: $(TEST_DIR)/%.c $(LIB_SRCS) $(HDRS) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(LIB_SRCS) $< -o $@ $(LDFLAGS)
+$(BUILD_DIR)/%: $(TEST_DIR)/%.c $(TEST_UTILS) $(LIB_SRCS) $(HDRS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(LIB_SRCS) $(TEST_UTILS) $< -o $@ $(LDFLAGS)
+
+# Run all tests
+test: tests
+	@echo "╔═══════════════════════════════════════════════════════════╗"
+	@echo "║              Running All Test Suites                     ║"
+	@echo "╚═══════════════════════════════════════════════════════════╝"
+	@for test in $(TEST_BINS); do \
+		if [ -f $$test ]; then \
+			./$$test || exit 1; \
+		fi; \
+	done
+	@echo "\n╔═══════════════════════════════════════════════════════════╗"
+	@echo "║              All Tests Completed Successfully             ║"
+	@echo "╚═══════════════════════════════════════════════════════════╝\n"
+
+# Alias for running all tests
+test-all: test
 
 # Ensure build directory exists
 $(BUILD_DIR):
