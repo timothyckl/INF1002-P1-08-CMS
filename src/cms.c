@@ -548,6 +548,7 @@ static OperationStatus query(StudentDatabase *db) {
   return OP_SUCCESS;
 }
 
+// Update record using ID
 static OperationStatus update(StudentDatabase *db) {
   // validate database pointer
   if (!db) {
