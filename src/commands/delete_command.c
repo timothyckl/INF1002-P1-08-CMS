@@ -20,8 +20,7 @@ OpStatus execute_delete(StudentDatabase *db) {
 
   // validate database is loaded
   if (!db->is_loaded || db->table_count == 0) {
-    return cmd_report_error("Database not loaded.",
-                            OP_ERROR_DB_NOT_LOADED);
+    return cmd_report_error("Database not loaded.", OP_ERROR_DB_NOT_LOADED);
   }
 
   // access the StudentRecords table
@@ -51,8 +50,7 @@ OpStatus execute_delete(StudentDatabase *db) {
 
   // validate ID is not empty
   if (id_len == 0) {
-    return cmd_report_error("Student ID cannot be empty.",
-                            OP_ERROR_VALIDATION);
+    return cmd_report_error("Student ID cannot be empty.", OP_ERROR_VALIDATION);
   }
 
   // parse ID using strtol for safe conversion with overflow detection
@@ -62,9 +60,8 @@ OpStatus execute_delete(StudentDatabase *db) {
 
   // check for conversion errors and overflow
   if (errno == ERANGE || *endptr != '\0' || endptr == id_buf) {
-    return cmd_report_error(
-        "Invalid student ID format. Please enter a number.",
-        OP_ERROR_VALIDATION);
+    return cmd_report_error("Invalid student ID format. Please enter a number.",
+                            OP_ERROR_VALIDATION);
   }
 
   // check ID range (fits in int)

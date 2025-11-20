@@ -5,9 +5,7 @@
 #include <string.h>
 
 OpStatus execute_open(StudentDatabase *db) {
-  // check if database is already loaded
   if (db->is_loaded) {
-    // warn user and confirm reload
     char confirm[10];
     printf("A database is already opened. Do you want to reload? (Y/N): ");
     fflush(stdout);
@@ -16,7 +14,6 @@ OpStatus execute_open(StudentDatabase *db) {
       return OP_ERROR_INPUT;
     }
 
-    // validate input (case-insensitive)
     size_t len = strcspn(confirm, "\r\n");
     confirm[len] = '\0';
 
@@ -26,7 +23,6 @@ OpStatus execute_open(StudentDatabase *db) {
       return OP_ERROR_VALIDATION;
     }
 
-    // user cancelled
     if (toupper(confirm[0]) == 'N') {
       cmd_wait_for_user();
       return OP_SUCCESS;
@@ -39,7 +35,6 @@ OpStatus execute_open(StudentDatabase *db) {
     db->table_count = 0;
   }
 
-  // prompt user for file path
   char path_buf[256];
   const char *path = NULL;
 
@@ -51,12 +46,10 @@ OpStatus execute_open(StudentDatabase *db) {
     printf(DEFAULT_FILE_MSG, DEFAULT_DATA_FILE);
     path = DEFAULT_DATA_FILE;
   } else {
-    // strip trailing newline/cr
     size_t len = strcspn(path_buf, "\r\n");
     path_buf[len] = '\0';
 
     if (len == 0) {
-      // empty input - use default
       printf(DEFAULT_FILE_MSG, DEFAULT_DATA_FILE);
       path = DEFAULT_DATA_FILE;
     } else {
@@ -64,7 +57,6 @@ OpStatus execute_open(StudentDatabase *db) {
     }
   }
 
-  // load database from file
   DBStatus status = db_load(db, path);
   if (status != DB_SUCCESS) {
     printf("CMS: Failed to load database: %s\n", db_status_string(status));
@@ -77,11 +69,9 @@ OpStatus execute_open(StudentDatabase *db) {
     return OP_ERROR_OPEN;
   }
 
-  // remember the path inside the database struct
   strncpy(db->filepath, path, sizeof db->filepath);
   db->filepath[sizeof db->filepath - 1] = '\0';
 
-  // success - mark database as loaded
   db->is_loaded = true;
   printf("CMS: The database file \"%s\" is successfully opened.\n", path);
 

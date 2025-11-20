@@ -28,11 +28,11 @@
  * details field reserved for future enhancements (unused initially)
  */
 typedef struct {
-  time_t timestamp;     // when operation occurred (unix time)
-  Operation operation;  // operation type from Operation enum
-  OpStatus status;      // operation result status
-  char details[128];    // optional context (unused initially, buffer reduced for
-                        // safety)
+  time_t timestamp;    // when operation occurred (unix time)
+  Operation operation; // operation type from Operation enum
+  OpStatus status;     // operation result status
+  char details[128];   // optional context (unused initially, buffer reduced for
+                       // safety)
 } EventEntry;
 
 /*
@@ -110,6 +110,6 @@ const char *event_status_to_string(OpStatus status);
  * returns pointer to buffer for convenience
  */
 const char *format_timestamp(time_t timestamp, char *buffer,
-                              size_t buffer_size);
+                             size_t buffer_size);
 
 #endif // EVENT_LOG_H

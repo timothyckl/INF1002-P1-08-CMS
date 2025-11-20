@@ -1,6 +1,6 @@
+#include "adv_query.h"
 #include "commands/command.h"
 #include "commands/command_utils.h"
-#include "adv_query.h"
 #include <stdio.h>
 
 OpStatus execute_adv_query(StudentDatabase *db) {

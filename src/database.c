@@ -15,15 +15,11 @@ StudentTable *table_init(const char *table_name) {
     return NULL;
   }
 
-  // copy table name
   strncpy(table->table_name, table_name, sizeof(table->table_name) - 1);
   table->table_name[sizeof(table->table_name) - 1] = '\0';
 
-  // initialise column headers
   table->column_headers = NULL;
   table->column_count = 0;
-
-  // allocate initial record capacity
   table->records = malloc(INITIAL_RECORD_CAPACITY * sizeof(StudentRecord));
   if (!table->records) {
     free(table);
@@ -44,13 +40,11 @@ void table_free(StudentTable *table) {
     return;
   }
 
-  // free column headers
   for (size_t i = 0; i < table->column_count; i++) {
     free(table->column_headers[i]);
   }
   free(table->column_headers);
 
-  // free records
   free(table->records);
   free(table);
 }
@@ -65,13 +59,11 @@ DBStatus table_set_column_headers(StudentTable *table, char **headers,
     return DB_ERROR_NULL_POINTER;
   }
 
-  // free existing headers if any
   for (size_t i = 0; i < table->column_count; i++) {
     free(table->column_headers[i]);
   }
   free(table->column_headers);
 
-  // store new headers
   table->column_headers = headers;
   table->column_count = count;
 
@@ -87,7 +79,6 @@ DBStatus table_add_record(StudentTable *table, StudentRecord *record) {
     return DB_ERROR_NULL_POINTER;
   }
 
-  // grow capacity if needed
   if (table->record_count >= table->record_capacity) {
     size_t new_capacity = table->record_capacity * 2;
     StudentRecord *temp =
@@ -101,7 +92,6 @@ DBStatus table_add_record(StudentTable *table, StudentRecord *record) {
     table->record_capacity = new_capacity;
   }
 
-  // add record
   table->records[table->record_count] = *record;
   table->record_count++;
 
@@ -127,7 +117,6 @@ DBStatus table_remove_record(StudentTable *table, int student_id) {
     }
   }
 
-  // check if record was found
   if (deleted_index == (size_t)-1) {
     return DB_ERROR_NOT_FOUND;
   }
@@ -139,10 +128,7 @@ DBStatus table_remove_record(StudentTable *table, int student_id) {
             (table->record_count - deleted_index - 1) * sizeof(StudentRecord));
   }
 
-  // decrement record count
   table->record_count--;
-
-  // zero out the last element for safety
   memset(&table->records[table->record_count], 0, sizeof(StudentRecord));
 
   return DB_SUCCESS;
@@ -161,7 +147,6 @@ StudentDatabase *db_init(void) {
   memset(db->db_name, 0, sizeof(db->db_name));
   memset(db->authors, 0, sizeof(db->authors));
 
-  // allocate initial table capacity
   db->tables = malloc(INITIAL_TABLE_CAPACITY * sizeof(StudentTable *));
   if (!db->tables) {
     free(db);
@@ -172,8 +157,6 @@ StudentDatabase *db_init(void) {
   db->table_capacity = INITIAL_TABLE_CAPACITY;
   db->is_loaded = false;
   db->filepath[0] = '\0';
-
-  // initialise event log to NULL (created on first use)
   db->event_log = NULL;
 
   return db;
@@ -187,13 +170,11 @@ void db_free(StudentDatabase *db) {
     return;
   }
 
-  // free all tables
   for (size_t i = 0; i < db->table_count; i++) {
     table_free(db->tables[i]);
   }
   free(db->tables);
 
-  // free event log if it exists
   event_log_free(db->event_log);
 
   free(db);
@@ -208,7 +189,6 @@ DBStatus db_add_table(StudentDatabase *db, StudentTable *table) {
     return DB_ERROR_NULL_POINTER;
   }
 
-  // grow capacity if needed
   if (db->table_count >= db->table_capacity) {
     size_t new_capacity = db->table_capacity * 2;
     StudentTable **temp =
@@ -222,7 +202,6 @@ DBStatus db_add_table(StudentDatabase *db, StudentTable *table) {
     db->table_capacity = new_capacity;
   }
 
-  // add table
   db->tables[db->table_count] = table;
   db->table_count++;
 
@@ -246,40 +225,33 @@ DBStatus db_load(StudentDatabase *db, const char *filename) {
  * returns: DB_SUCCESS on success, error code on failure
  */
 DBStatus db_save(StudentDatabase *db, const char *filename) {
-  // validate parameters
   if (!db || !filename) {
     return DB_ERROR_NULL_POINTER;
   }
 
-  // validate database has tables
   if (db->table_count == 0) {
     return DB_ERROR_INVALID_DATA;
   }
 
-  // access the first table (by convention, StudentRecords table)
   StudentTable *table = db->tables[0];
   if (!table) {
     return DB_ERROR_NULL_POINTER;
   }
 
-  // validate table has column headers
   if (!table->column_headers || table->column_count == 0) {
     return DB_ERROR_INVALID_DATA;
   }
 
-  // open file for writing
   FILE *fp = fopen(filename, "w");
   if (!fp) {
     return DB_ERROR_FILE_NOT_FOUND;
   }
 
-  // write header metadata
   fprintf(fp, "Database Name: %s\n", db->db_name);
   fprintf(fp, "Authors: %s\n", db->authors);
   fprintf(fp, "\n");
   fprintf(fp, "Table Name: %s\n", table->table_name);
 
-  // write column headers (ID, Name, Programme, Mark)
   for (size_t i = 0; i < table->column_count; i++) {
     fprintf(fp, "%s", table->column_headers[i]);
     if (i + 1 < table->column_count) {
@@ -288,13 +260,11 @@ DBStatus db_save(StudentDatabase *db, const char *filename) {
   }
   fputc('\n', fp);
 
-  // write all records
   for (size_t i = 0; i < table->record_count; i++) {
     const StudentRecord *r = &table->records[i];
     fprintf(fp, "%d\t%s\t%s\t%.2f\n", r->id, r->name, r->prog, r->mark);
   }
 
-  // close file
   if (fclose(fp) != 0) {
     return DB_ERROR_FILE_READ;
   }
@@ -302,65 +272,58 @@ DBStatus db_save(StudentDatabase *db, const char *filename) {
   return DB_SUCCESS;
 }
 
-DBStatus db_update_record(
-    StudentDatabase *db,
-    int id,
-    const char *new_name,
-    const char *new_prog,
-    const float *new_mark)
-{
-    if (!db) {
-        return DB_ERROR_NULL_POINTER;
+DBStatus db_update_record(StudentDatabase *db, int id, const char *new_name,
+                          const char *new_prog, const float *new_mark) {
+  if (!db) {
+    return DB_ERROR_NULL_POINTER;
+  }
+
+  // All records are stored in the first table (StudentRecords)
+  if (db->table_count == 0) {
+    return DB_ERROR_INVALID_DATA;
+  }
+
+  StudentTable *table = db->tables[0];
+  if (!table) {
+    return DB_ERROR_NULL_POINTER;
+  }
+
+  StudentRecord *rec = NULL;
+  for (size_t i = 0; i < table->record_count; i++) {
+    if (table->records[i].id == id) {
+      rec = &table->records[i];
+      break;
     }
+  }
 
-    // All records are stored in the first table (StudentRecords)
-    if (db->table_count == 0) {
-        return DB_ERROR_INVALID_DATA;
-    }
+  if (!rec) {
+    return DB_ERROR_NOT_FOUND;
+  }
 
-    StudentTable *table = db->tables[0];
-    if (!table) {
-        return DB_ERROR_NULL_POINTER;
-    }
+  // Prepare copy for validation
+  StudentRecord updated = *rec;
 
-    // Find the record
-    StudentRecord *rec = NULL;
-    for (size_t i = 0; i < table->record_count; i++) {
-        if (table->records[i].id == id) {
-            rec = &table->records[i];
-            break;
-        }
-    }
+  if (new_name) {
+    strncpy(updated.name, new_name, sizeof(updated.name) - 1);
+    updated.name[sizeof(updated.name) - 1] = '\0';
+  }
 
-    if (!rec) {
-        return DB_ERROR_NOT_FOUND;
-    }
+  if (new_prog) {
+    strncpy(updated.prog, new_prog, sizeof(updated.prog) - 1);
+    updated.prog[sizeof(updated.prog) - 1] = '\0';
+  }
 
-    // Prepare copy for validation
-    StudentRecord updated = *rec;
+  if (new_mark) {
+    updated.mark = *new_mark;
+  }
 
-    if (new_name) {
-        strncpy(updated.name, new_name, sizeof(updated.name) - 1);
-        updated.name[sizeof(updated.name) - 1] = '\0';
-    }
+  // No built-in validate_record() in current code —
+  // parser already validated during load.
+  // So the CMS input validation will handle bad values.
 
-    if (new_prog) {
-        strncpy(updated.prog, new_prog, sizeof(updated.prog) - 1);
-        updated.prog[sizeof(updated.prog) - 1] = '\0';
-    }
+  *rec = updated;
 
-    if (new_mark) {
-        updated.mark = *new_mark;
-    }
-
-    // No built-in validate_record() in current code — 
-    // parser already validated during load.
-    // So the CMS input validation will handle bad values.
-
-    // Commit update
-    *rec = updated;
-
-    return DB_SUCCESS;
+  return DB_SUCCESS;
 }
 
 /*

@@ -17,14 +17,14 @@
  * - lowest mark with student details
  */
 typedef struct {
-  size_t total_count;           // total number of students
-  float average_mark;           // mean of all marks
-  float highest_mark;           // maximum mark value
-  float lowest_mark;            // minimum mark value
+  size_t total_count;            // total number of students
+  float average_mark;            // mean of all marks
+  float highest_mark;            // maximum mark value
+  float lowest_mark;             // minimum mark value
   char highest_student_name[50]; // name of student with highest mark
   char lowest_student_name[50];  // name of student with lowest mark
-  int highest_student_id;       // id of student with highest mark
-  int lowest_student_id;        // id of student with lowest mark
+  int highest_student_id;        // id of student with highest mark
+  int lowest_student_id;         // id of student with lowest mark
 } StudentStatistics;
 
 /**

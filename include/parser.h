@@ -1,6 +1,14 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+/*
+ * parser module
+ *
+ * handles reading and parsing student database files.
+ * processes metadata lines, table headers, and student records.
+ * validates data during parsing to ensure correctness.
+ */
+
 #include "database.h"
 
 typedef enum {

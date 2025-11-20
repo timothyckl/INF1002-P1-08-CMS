@@ -1,6 +1,15 @@
 #ifndef DATABASE_H
 #define DATABASE_H
 
+/*
+ * database module
+ *
+ * manages student records organised in tables within a database structure.
+ * uses dynamic arrays that grow automatically as needed (doubling capacity).
+ * supports loading from and saving to text files, along with basic
+ * operations like adding and removing records.
+ */
+
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -71,32 +80,44 @@ typedef struct {
 } StudentDatabase;
 
 // table lifecycle
+// creates a new empty table with the given name
 StudentTable *table_init(const char *table_name);
+
+// frees all memory associated with a table
 void table_free(StudentTable *table);
+
+// sets column headers for a table (takes ownership of headers array)
 DBStatus table_set_column_headers(StudentTable *table, char **headers,
                                   size_t count);
+
+// adds a record to the table (grows capacity if needed)
 DBStatus table_add_record(StudentTable *table, StudentRecord *record);
+
+// removes a record from the table by student id
 DBStatus table_remove_record(StudentTable *table, int student_id);
 
 // database lifecycle
+// creates a new empty database
 StudentDatabase *db_init(void);
+
+// frees all memory associated with a database
 void db_free(StudentDatabase *db);
+
+// adds a table to the database (grows capacity if needed)
 DBStatus db_add_table(StudentDatabase *db, StudentTable *table);
 
 // file operations
+// loads database from a text file
 DBStatus db_load(StudentDatabase *db, const char *filename);
+
+// saves database to a text file
 DBStatus db_save(StudentDatabase *db, const char *filename);
 
 // helper to convert status to string (for error messages)
 const char *db_status_string(DBStatus status);
 
-// Update a student record by ID. Only non-NULL fields will be updated.
-DBStatus db_update_record(
-    StudentDatabase *db,
-    int id,
-    const char *new_name,
-    const char *new_prog,
-    const float *new_mark);
-
+// updates a student record by id (only non-null fields will be updated)
+DBStatus db_update_record(StudentDatabase *db, int id, const char *new_name,
+                          const char *new_prog, const float *new_mark);
 
 #endif

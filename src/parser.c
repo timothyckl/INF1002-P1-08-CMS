@@ -3,9 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// TODO: figure out magic numbers (anyhow chose so will need to justify)
-// TODO: handle unexpected metadata and table data
-
 /*
  * validate a student record
  * returns: VALID_RECORD if valid, error code otherwise

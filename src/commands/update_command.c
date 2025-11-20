@@ -48,8 +48,7 @@ OpStatus execute_update(StudentDatabase *db) {
   input_buf[len] = '\0';
 
   if (len == 0) {
-    return cmd_report_error("Student ID cannot be empty.",
-                            OP_ERROR_VALIDATION);
+    return cmd_report_error("Student ID cannot be empty.", OP_ERROR_VALIDATION);
   }
 
   char *endptr = NULL;
@@ -61,8 +60,8 @@ OpStatus execute_update(StudentDatabase *db) {
 
   if (parsed_id < 0 || parsed_id > INT_MAX) {
     char err_msg[128];
-    snprintf(err_msg, sizeof err_msg,
-             "Student ID must be within 0 to %d.", INT_MAX);
+    snprintf(err_msg, sizeof err_msg, "Student ID must be within 0 to %d.",
+             INT_MAX);
     return cmd_report_error(err_msg, OP_ERROR_VALIDATION);
   }
 
@@ -133,7 +132,8 @@ OpStatus execute_update(StudentDatabase *db) {
     size_t plen = strcspn(buffer, "\r\n");
     buffer[plen] = '\0';
     if (plen == 0) {
-      return cmd_report_error("Programme cannot be empty.", OP_ERROR_VALIDATION);
+      return cmd_report_error("Programme cannot be empty.",
+                              OP_ERROR_VALIDATION);
     }
     new_prog = buffer;
 

@@ -87,8 +87,7 @@ void log_event(EventLog *log, Operation op, OpStatus status) {
     }
 
     // attempt reallocation
-    EventEntry *temp =
-        realloc(log->entries, new_capacity * sizeof(EventEntry));
+    EventEntry *temp = realloc(log->entries, new_capacity * sizeof(EventEntry));
 
     if (!temp) {
       return; // silent fail - allocation failed, don't crash
@@ -188,7 +187,7 @@ const char *event_status_to_string(OpStatus status) {
  * provides clear, unambiguous timestamp representation
  */
 const char *format_timestamp(time_t timestamp, char *buffer,
-                              size_t buffer_size) {
+                             size_t buffer_size) {
   if (!buffer || buffer_size == 0) {
     return ""; // defensive check
   }

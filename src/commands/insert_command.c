@@ -11,24 +11,19 @@
  * returns: OP_SUCCESS on successful insertion, OpStatus error code on failure
  */
 OpStatus execute_insert(StudentDatabase *db) {
-  // validate database pointer
   if (!db) {
     return cmd_report_error("Database error.", OP_ERROR_GENERAL);
   }
 
-  // validate database is loaded
   if (!db->is_loaded || db->table_count == 0) {
-    return cmd_report_error("Database not loaded.",
-                            OP_ERROR_DB_NOT_LOADED);
+    return cmd_report_error("Database not loaded.", OP_ERROR_DB_NOT_LOADED);
   }
 
-  // access the StudentRecords table
   StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
   if (!table) {
     return cmd_report_error("Table error.", OP_ERROR_GENERAL);
   }
 
-  // prompt for student ID
   char id_buf[256];
   printf("Enter student ID: ");
   fflush(stdout);
@@ -37,28 +32,22 @@ OpStatus execute_insert(StudentDatabase *db) {
     return cmd_report_error("Failed to read input.", OP_ERROR_INPUT);
   }
 
-  // strip trailing newline/carriage return
   size_t id_len = strcspn(id_buf, "\r\n");
   id_buf[id_len] = '\0';
 
-  // validate ID is not empty
   if (id_len == 0) {
-    return cmd_report_error("Student ID cannot be empty.",
-                            OP_ERROR_VALIDATION);
+    return cmd_report_error("Student ID cannot be empty.", OP_ERROR_VALIDATION);
   }
 
   // parse ID using strtol for safe conversion
   char *endptr;
   long id_long = strtol(id_buf, &endptr, 10);
 
-  // check for conversion errors
   if (*endptr != '\0' || endptr == id_buf) {
-    return cmd_report_error(
-        "Invalid student ID format. Please enter a number.",
-        OP_ERROR_VALIDATION);
+    return cmd_report_error("Invalid student ID format. Please enter a number.",
+                            OP_ERROR_VALIDATION);
   }
 
-  // check ID range (fits in int)
   if (id_long < 0 || id_long > 9999999) {
     return cmd_report_error("Student ID must be between 0 and 9999999.",
                             OP_ERROR_VALIDATION);
@@ -66,7 +55,6 @@ OpStatus execute_insert(StudentDatabase *db) {
 
   int student_id = (int)id_long;
 
-  // check for duplicate ID
   for (size_t i = 0; i < table->record_count; i++) {
     if (table->records[i].id == student_id) {
       char err_msg[256];
@@ -76,7 +64,6 @@ OpStatus execute_insert(StudentDatabase *db) {
     }
   }
 
-  // prompt for student name
   char name_buf[256];
   printf("Enter student name: ");
   fflush(stdout);
@@ -85,23 +72,19 @@ OpStatus execute_insert(StudentDatabase *db) {
     return cmd_report_error("Failed to read input.", OP_ERROR_INPUT);
   }
 
-  // strip trailing newline/carriage return
   size_t name_len = strcspn(name_buf, "\r\n");
   name_buf[name_len] = '\0';
 
-  // validate name is not empty
   if (name_len == 0) {
     return cmd_report_error("Student name cannot be empty.",
                             OP_ERROR_VALIDATION);
   }
 
-  // check name length fits in StudentRecord
   if (name_len >= 50) {
-    return cmd_report_error(
-        "Student name is too long (max 49 characters).", OP_ERROR_VALIDATION);
+    return cmd_report_error("Student name is too long (max 49 characters).",
+                            OP_ERROR_VALIDATION);
   }
 
-  // prompt for programme
   char prog_buf[256];
   printf("Enter programme: ");
   fflush(stdout);
@@ -110,23 +93,18 @@ OpStatus execute_insert(StudentDatabase *db) {
     return cmd_report_error("Failed to read input.", OP_ERROR_INPUT);
   }
 
-  // strip trailing newline/carriage return
   size_t prog_len = strcspn(prog_buf, "\r\n");
   prog_buf[prog_len] = '\0';
 
-  // validate programme is not empty
   if (prog_len == 0) {
-    return cmd_report_error("Programme cannot be empty.",
+    return cmd_report_error("Programme cannot be empty.", OP_ERROR_VALIDATION);
+  }
+
+  if (prog_len >= 50) {
+    return cmd_report_error("Programme name is too long (max 49 characters).",
                             OP_ERROR_VALIDATION);
   }
 
-  // check programme length fits in StudentRecord
-  if (prog_len >= 50) {
-    return cmd_report_error(
-        "Programme name is too long (max 49 characters).", OP_ERROR_VALIDATION);
-  }
-
-  // prompt for mark
   char mark_buf[256];
   printf("Enter mark: ");
   fflush(stdout);
@@ -135,27 +113,22 @@ OpStatus execute_insert(StudentDatabase *db) {
     return cmd_report_error("Failed to read input.", OP_ERROR_INPUT);
   }
 
-  // strip trailing newline/carriage return
   size_t mark_len = strcspn(mark_buf, "\r\n");
   mark_buf[mark_len] = '\0';
 
-  // validate mark is not empty
   if (mark_len == 0) {
-    return cmd_report_error("Mark cannot be empty.",
-                            OP_ERROR_VALIDATION);
+    return cmd_report_error("Mark cannot be empty.", OP_ERROR_VALIDATION);
   }
 
   // parse mark using strtof for safe conversion
   char *mark_endptr;
   float mark = strtof(mark_buf, &mark_endptr);
 
-  // check for conversion errors
   if (*mark_endptr != '\0' || mark_endptr == mark_buf) {
-    return cmd_report_error(
-        "Invalid mark format. Please enter a number.", OP_ERROR_VALIDATION);
+    return cmd_report_error("Invalid mark format. Please enter a number.",
+                            OP_ERROR_VALIDATION);
   }
 
-  // create student record
   StudentRecord record;
   record.id = student_id;
   strncpy(record.name, name_buf, sizeof record.name - 1);
@@ -173,7 +146,6 @@ OpStatus execute_insert(StudentDatabase *db) {
     return cmd_report_error(err_msg, OP_ERROR_VALIDATION);
   }
 
-  // insert record into table
   DBStatus db_status = table_add_record(table, &record);
   if (db_status != DB_SUCCESS) {
     char err_msg[256];
@@ -182,7 +154,6 @@ OpStatus execute_insert(StudentDatabase *db) {
     return cmd_report_error(err_msg, OP_ERROR_GENERAL);
   }
 
-  // success - display message
   printf("CMS: A new record with ID=%d is successfully inserted.\n",
          student_id);
 

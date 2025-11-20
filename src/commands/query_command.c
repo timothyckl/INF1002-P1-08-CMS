@@ -6,18 +6,14 @@
 #include <string.h>
 
 OpStatus execute_query(StudentDatabase *db) {
-  // validate database pointer
   if (!db) {
     return cmd_report_error("Database error.", OP_ERROR_GENERAL);
   }
 
-  // ensure database is loaded before querying
   if (!db->is_loaded || db->table_count == 0) {
-    return cmd_report_error("Database not loaded.",
-                            OP_ERROR_DB_NOT_LOADED);
+    return cmd_report_error("Database not loaded.", OP_ERROR_DB_NOT_LOADED);
   }
 
-  // retrieve student table reference
   StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
   if (!table) {
     return cmd_report_error("Table error.", OP_ERROR_GENERAL);
@@ -29,7 +25,6 @@ OpStatus execute_query(StudentDatabase *db) {
     return OP_SUCCESS;
   }
 
-  // prompt user for student ID
   char input_buf[64];
   printf("Enter student ID to search: ");
   fflush(stdout);
@@ -42,8 +37,7 @@ OpStatus execute_query(StudentDatabase *db) {
   input_buf[len] = '\0';
 
   if (len == 0) {
-    return cmd_report_error("Student ID cannot be empty.",
-                            OP_ERROR_VALIDATION);
+    return cmd_report_error("Student ID cannot be empty.", OP_ERROR_VALIDATION);
   }
 
   char *endptr = NULL;
@@ -60,7 +54,7 @@ OpStatus execute_query(StudentDatabase *db) {
 
   int student_id = (int)parsed_id;
 
-  // search for record with matching ID in student records table only
+  // search for record with matching ID
   StudentRecord *record = NULL;
   for (size_t r = 0; r < table->record_count; r++) {
     if (table->records[r].id == student_id) {

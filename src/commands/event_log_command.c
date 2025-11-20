@@ -33,8 +33,7 @@ OpStatus execute_show_log(StudentDatabase *db) {
   }
 
   // display header
-  printf(
-      "==============================================================\n");
+  printf("==============================================================\n");
   printf("Operation History for Current Session\n\n");
 
   // display database info if loaded
@@ -44,8 +43,9 @@ OpStatus execute_show_log(StudentDatabase *db) {
 
   // calculate display range (handle circular buffer)
   size_t total_ops = db->event_log->count;
-  size_t start_idx =
-      (total_ops > EVENT_LOG_MAX_CAPACITY) ? (total_ops - EVENT_LOG_MAX_CAPACITY) : 0;
+  size_t start_idx = (total_ops > EVENT_LOG_MAX_CAPACITY)
+                         ? (total_ops - EVENT_LOG_MAX_CAPACITY)
+                         : 0;
 
   printf("Total Operations: %zu", total_ops);
   if (total_ops > EVENT_LOG_MAX_CAPACITY) {
@@ -78,8 +78,7 @@ OpStatus execute_show_log(StudentDatabase *db) {
     printf("%-20s %-12s %-20s\n", time_buf, op_str, status_str);
   }
 
-  printf(
-      "==============================================================\n");
+  printf("==============================================================\n");
 
   cmd_wait_for_user();
 

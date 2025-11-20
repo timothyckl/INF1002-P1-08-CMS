@@ -11,39 +11,30 @@
  * returns: OP_SUCCESS on success, OpStatus error code on failure
  */
 OpStatus execute_sort(StudentDatabase *db) {
-  // validate database pointer
   if (!db) {
     return cmd_report_error("Database error.", OP_ERROR_GENERAL);
   }
 
-  // validate database is loaded
   if (!db->is_loaded || db->table_count == 0) {
-    return cmd_report_error("Database not loaded.",
-                            OP_ERROR_DB_NOT_LOADED);
+    return cmd_report_error("Database not loaded.", OP_ERROR_DB_NOT_LOADED);
   }
 
-  // access the StudentRecords table
   StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
   if (!table) {
     return cmd_report_error("Table error.", OP_ERROR_GENERAL);
   }
 
-  // validate records array exists
   if (!table->records) {
-    return cmd_report_error("Table records array is NULL.",
-                            OP_ERROR_GENERAL);
+    return cmd_report_error("Table records array is NULL.", OP_ERROR_GENERAL);
   }
 
-  // validate record count is consistent
   if (table->record_count > table->record_capacity) {
     return cmd_report_error("Table record count exceeds capacity.",
                             OP_ERROR_VALIDATION);
   }
 
-  // check if table has records
   if (table->record_count == 0) {
-    return cmd_report_error("No records available to sort.",
-                            OP_ERROR_GENERAL);
+    return cmd_report_error("No records available to sort.", OP_ERROR_GENERAL);
   }
 
   char field_buf[10];
@@ -73,9 +64,8 @@ OpStatus execute_sort(StudentDatabase *db) {
   if (field_len == 1 && (field_buf[0] == '1' || field_buf[0] == '2')) {
     field = field_buf[0];
   } else {
-    return cmd_report_error(
-        "Invalid field. Enter '1' for ID or '2' for Mark.",
-        OP_ERROR_VALIDATION);
+    return cmd_report_error("Invalid field. Enter '1' for ID or '2' for Mark.",
+                            OP_ERROR_VALIDATION);
   }
 
   char order_buf[10];

@@ -31,6 +31,4 @@ CMSStatus ui_display_menu(void) {
   return CMS_SUCCESS;
 }
 
-void ui_display_error(const char *error_msg) {
-  printf("CMS: %s\n", error_msg);
-}
+void ui_display_error(const char *error_msg) { printf("CMS: %s\n", error_msg); }

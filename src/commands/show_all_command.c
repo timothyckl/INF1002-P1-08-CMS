@@ -4,25 +4,20 @@
 #include <string.h>
 
 OpStatus execute_show_all(StudentDatabase *db) {
-  // validate database pointer
   if (!db) {
     return cmd_report_error("Database error.", OP_ERROR_GENERAL);
   }
 
-  // validate database is loaded
   if (!db->is_loaded || db->table_count == 0) {
-    return cmd_report_error("Database not loaded.",
-                            OP_ERROR_DB_NOT_LOADED);
+    return cmd_report_error("Database not loaded.", OP_ERROR_DB_NOT_LOADED);
   }
 
-  // access the StudentRecords table
   // note: assumes tables[0] is always StudentRecords per database schema
   StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
   if (!table) {
     return cmd_report_error("Table error.", OP_ERROR_GENERAL);
   }
 
-  // handle empty table
   if (table->record_count == 0) {
     printf("CMS: No records found in table \"%s\".\n", table->table_name);
 
