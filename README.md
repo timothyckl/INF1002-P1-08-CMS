@@ -23,8 +23,14 @@ make
 See [Support Guide](SUPPORT.md) to setup Make.exe in windows enviroment.
 
 or manually:
+
+(Windows users using GCC)
 ```bash
 gcc -Iinclude src\*.c -o main.exe
+```
+(MacOS users using Clang.)
+```bash
+clang -Iinclude src/*.c -o main.exe
 ```
 
 ### Run
