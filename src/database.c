@@ -1,4 +1,5 @@
 #include "database.h"
+#include "event_log.h"
 #include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -172,6 +173,9 @@ StudentDatabase *db_init(void) {
   db->is_loaded = false;
   db->filepath[0] = '\0';
 
+  // initialise event log to NULL (created on first use)
+  db->event_log = NULL;
+
   return db;
 }
 
@@ -188,6 +192,10 @@ void db_free(StudentDatabase *db) {
     table_free(db->tables[i]);
   }
   free(db->tables);
+
+  // free event log if it exists
+  event_log_free(db->event_log);
+
   free(db);
 }
 

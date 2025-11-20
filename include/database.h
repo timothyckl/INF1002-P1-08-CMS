@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+// forward declaration to avoid circular dependency
+typedef struct EventLog EventLog;
+
 // capacity constants
 #define INITIAL_TABLE_CAPACITY 2
 #define INITIAL_RECORD_CAPACITY 10
@@ -61,6 +64,10 @@ typedef struct {
 
   // where the database was loaded from (for saving)
   char filepath[MAX_FILE_PATH];
+
+  // session event log for tracking operations
+  // pointer to event log (NULL until first event or until initialised)
+  EventLog *event_log;
 } StudentDatabase;
 
 // table lifecycle

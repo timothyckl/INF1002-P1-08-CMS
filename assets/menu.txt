@@ -12,6 +12,8 @@ Main Menu
 [7] SAVE: Save all records to the database file.
 [8] SORT: Sort records by ID or Mark in ascending or descending order.
 [9] ADV QUERY: Run the advanced query pipeline.
+[10] STATISTICS: Display summary statistics for all students.
+[11] SHOW LOG: Display operation history for this session.
 [0] EXIT: Exit the program.
 ==============================================================
 
