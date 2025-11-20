@@ -5,10 +5,10 @@
  * Tests the pipeline-based search system with GREP and MARK filters.
  *
  * Build command:
- *   gcc -Iinclude -Wall -Wextra -g src/database.c src/parser.c src/cms.c src/utils.c src/adv_query.c tests/test_adv_query.c -o build/test_adv_query.exe
+ *   clang -Iinclude -Wall -Wextra -g src/{adv_query,cms,database,parser,sorting,utils}.c tests/test_adv_query.c -o build/test_adv_query.exe
  *
  * Run command:
- *   .\build\test_adv_query.exe
+ *   ./build/test_adv_query.exe
  */
 
 #include <stdio.h>
@@ -100,4 +100,3 @@ int main(void) {
   db_free(db);
   return EXIT_SUCCESS;
 }
-

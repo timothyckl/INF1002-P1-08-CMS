@@ -6,10 +6,10 @@
  * functionality with user input.
  *
  * Build command:
- *   gcc -Iinclude -Wall -Wextra -g src/database.c src/parser.c src/cms.c src/utils.c src/adv_query.c tests/example_menu_adv_query.c -o build/example_menu_adv_query.exe
+ *   clang -Iinclude -Wall -Wextra -g \src/{adv_query,cms,database,parser,sorting,utils}.c \tests/example_menu_adv_query.c \-o build/example_menu_adv_query.exe
  *
  * Run command:
- *   .\build\example_menu_adv_query.exe
+ *   ./build/example_menu_adv_query.exe
  */
 
 #include <stdio.h>
@@ -215,4 +215,3 @@ int main(void) {
   db_free(db);
   return EXIT_SUCCESS;
 }
-
