@@ -16,6 +16,7 @@ typedef enum {
   QUERY_FIELD_INVALID
 } QueryField;
 
+// duplicate string to heap; caller frees
 static char *dup_string(const char *src) {
   if (!src) {
     return NULL;
@@ -29,6 +30,7 @@ static char *dup_string(const char *src) {
   return copy;
 }
 
+// trim leading/trailing whitespace in-place
 static char *trim(char *text) {
   if (!text) {
     return text;
@@ -47,6 +49,7 @@ static char *trim(char *text) {
   return text;
 }
 
+// case-insensitive string equals
 static int strcaseequal(const char *a, const char *b) {
   if (!a || !b) {
     return 0;
@@ -61,6 +64,7 @@ static int strcaseequal(const char *a, const char *b) {
   return *a == '\0' && *b == '\0';
 }
 
+// map token to supported query field
 static QueryField parse_field(const char *token) {
   if (strcaseequal(token, "NAME")) {
     return QUERY_FIELD_NAME;
@@ -74,6 +78,7 @@ static QueryField parse_field(const char *token) {
   return QUERY_FIELD_INVALID;
 }
 
+// flatten all records into one array for filtering
 static size_t collect_records(StudentDatabase *db, StudentRecord ***out) {
   size_t total = 0;
   for (size_t t = 0; t < db->table_count; t++) {
@@ -123,6 +128,7 @@ static int contains_case_insensitive(const char *haystack, const char *needle) {
   return 0;
 }
 
+// match a record against a GREP stage for a given field
 static int grep_matches(const StudentRecord *record, QueryField field,
                         const char *pattern) {
   if (!pattern) {
@@ -169,6 +175,7 @@ static int apply_text_filter(StudentRecord **records, unsigned char *keep,
   return 1;
 }
 
+// apply MARK comparison to keep-mask for all records
 static int apply_mark_filter(StudentRecord **records, unsigned char *keep,
                              size_t count, char op, double value) {
   for (size_t i = 0; i < count; i++) {
@@ -179,6 +186,7 @@ static int apply_mark_filter(StudentRecord **records, unsigned char *keep,
   return 1;
 }
 
+// parse and apply a GREP stage to filter by name/programme substring
 static int parse_grep_stage(StudentRecord **records, unsigned char *keep,
                             size_t count, char *expr, int *field_used) {
   expr = trim(expr);
@@ -211,6 +219,7 @@ static int parse_grep_stage(StudentRecord **records, unsigned char *keep,
   return apply_text_filter(records, keep, count, field, expr);
 }
 
+// parse and apply a MARK comparison stage
 static int parse_mark_stage(StudentRecord **records, unsigned char *keep,
                             size_t count, char *expr, int *field_used) {
   expr = trim(expr);
@@ -238,6 +247,7 @@ static int parse_mark_stage(StudentRecord **records, unsigned char *keep,
   return apply_mark_filter(records, keep, count, op, value);
 }
 
+// entry to run a pipeline string (already built) against the database
 AdvQueryStatus adv_query_execute(StudentDatabase *db, const char *pipeline) {
   if (!db || !pipeline) {
     return ADV_QUERY_ERROR_INVALID_ARGUMENT;

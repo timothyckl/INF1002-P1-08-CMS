@@ -2,7 +2,6 @@
 Class Management System
 
 Main Menu
-
 [1] OPEN: Opens a database file and reads in all records.
 [2] SHOW ALL: Shows all records in a database. 
 [3] INSERT: Add a new record to the database. 
@@ -12,5 +11,5 @@ Main Menu
 [7] SAVE: Save all records to the database file.
 [8] SORT: Sort records by ID or Mark in ascending or descending order.
 [9] EXIT: Exit the program.
+[10] ADV QUERY: Run the advanced query pipeline.
 ==============================================================
-

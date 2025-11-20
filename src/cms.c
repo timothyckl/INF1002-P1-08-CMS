@@ -1,3 +1,4 @@
+#include "adv_query.h"
 #include "cms.h"
 #include "database.h"
 #include "parser.h"
@@ -27,6 +28,7 @@ typedef enum {
   SAVE,
   SORT,
   EXIT,
+  ADV_QUERY = 10,
 } Operation;
 
 typedef enum {
@@ -548,6 +550,27 @@ static OperationStatus query(StudentDatabase *db) {
   return OP_SUCCESS;
 }
 
+static OperationStatus adv_query(StudentDatabase *db) {
+  if (!db) {
+    return report_error_and_return("Database error.", OP_ERR);
+  }
+  // guided prompt that builds a GREP/MARK pipeline then runs adv query
+  AdvQueryStatus adv_status = adv_query_run_prompt(db);
+  if (adv_status == ADV_QUERY_ERROR_EMPTY_DATABASE) {
+    wait_for_user();
+    return OP_SUCCESS;
+  }
+  if (adv_status != ADV_QUERY_OK) {
+    printf("CMS: Advanced query failed: %s\n",
+           adv_query_status_string(adv_status));
+    wait_for_user();
+    return OP_ERR;
+  }
+
+  wait_for_user();
+  return OP_SUCCESS;
+}
+
 OperationStatus update() {
   // your code here
   printf("you selected update!\n");
@@ -859,6 +882,9 @@ static OperationStatus operation_router(Operation op, StudentDatabase *db) {
   case SORT:
     status = sort(db);
     return status;
+  case ADV_QUERY:
+    status = adv_query(db);
+    return status;
   case EXIT:
     printf("Goodbye!\n");
     return OP_SUCCESS;
@@ -903,6 +929,7 @@ CMSStatus main_loop(void) {
     //   operation_status_string(op_status)); return status;
     // }
     op_status = operation_router(op, db);
+    (void)op_status;
     // if (op_status != OP_SUCCESS) {
     //   fprintf(stderr, "Failed to perform operation: %s\n",
     //   operation_status_string(op_status)); return status;
