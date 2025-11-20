@@ -19,6 +19,7 @@
 
 static void print_case_result(const char *name, AdvQueryStatus status,
                               AdvQueryStatus expected) {
+  // small helper to label pass/fail for each scenario
   if (status == expected) {
     printf("[OK] %s\n", name);
   } else {
@@ -28,6 +29,7 @@ static void print_case_result(const char *name, AdvQueryStatus status,
 
 static AdvQueryStatus run_pipeline(const char *label, StudentDatabase *db,
                                    const char *pipeline) {
+  // invoke the pipeline and log the status for visibility
   printf("\n-- %s\nPipeline: %s\n", label, pipeline);
   AdvQueryStatus status = adv_query_execute(db, pipeline);
   printf("Status: %s\n", adv_query_status_string(status));

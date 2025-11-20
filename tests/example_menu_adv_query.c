@@ -136,17 +136,8 @@ static void run_adv_query(StudentDatabase *db) {
     return;
   }
 
-  char pipeline[MENU_BUF];
-  printf("Enter pipeline (e.g. GREP NAME = Ann | MARK > 60): ");
-  fflush(stdout);
-  if (!fgets(pipeline, sizeof pipeline, stdin)) {
-    printf("CMS: Failed to read pipeline.\n");
-    wait_for_enter();
-    return;
-  }
-  trim_newline(pipeline);
-
-  AdvQueryStatus status = adv_query_execute(db, pipeline);
+  // guided prompt that builds and executes the pipeline for the user
+  AdvQueryStatus status = adv_query_run_prompt(db);
   if (status != ADV_QUERY_OK) {
     printf("CMS: Advanced query failed: %s\n",
            adv_query_status_string(status));

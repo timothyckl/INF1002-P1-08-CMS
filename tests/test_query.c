@@ -16,6 +16,7 @@
 
 #include "database.h"
 
+// lightweight lookup helper mirroring the QUERY operation
 static StudentRecord *find_record_by_id(StudentDatabase *db, int id) {
   if (!db || db->table_count == 0) {
     return NULL;
@@ -54,6 +55,7 @@ static void expect_null(StudentRecord *record, const char *label) {
 }
 
 static void run_lookup(StudentDatabase *db, int id) {
+  // wrap the helper to show the result in a readable way
   StudentRecord *record = find_record_by_id(db, id);
   if (!record) {
     printf("[WARN] No record found for ID=%d\n", id);
