@@ -1,5 +1,5 @@
-#include "adv_query.h"
 #include "cms.h"
+#include "adv_query.h"
 #include "database.h"
 #include "parser.h"
 #include "sorting.h"
@@ -19,7 +19,8 @@
 // we define these enums here (and not in the header) because the will not be
 // used anywhere else in the codebase
 typedef enum {
-  OPEN = 1,
+  EXIT = 0,
+  OPEN,
   SHOW_ALL,
   INSERT,
   QUERY,
@@ -27,16 +28,19 @@ typedef enum {
   DELETE,
   SAVE,
   SORT,
-  EXIT,
-  ADV_QUERY = 10,
+  ADV_QUERY,
 } Operation;
 
+// operation status codes for internal cms operations
 typedef enum {
-  OP_SUCCESS,
-  OPEN_FAILURE, // failed to open file
-  OP_ERR,
-  OP_INVALID,
-} OperationStatus;
+  OP_SUCCESS = 0,         // operation completed successfully
+  OP_ERROR_OPEN,          // failed to open file
+  OP_ERROR_INPUT,         // input reading failed
+  OP_ERROR_VALIDATION,    // validation failed
+  OP_ERROR_DB_NOT_LOADED, // database not loaded
+  OP_ERROR_GENERAL,       // general operation error
+  OP_ERROR_INVALID        // invalid operation
+} OpStatus;
 
 CMSStatus cms_init() {
   // print declaration
@@ -44,7 +48,7 @@ CMSStatus cms_init() {
   FILE *handle = get_file_handle(DECLARATION_FILE_PATH);
 
   if (handle == NULL) {
-    return CMS_FILE_OPEN_ERR;
+    return CMS_ERROR_FILE_OPEN;
   }
 
   print_file_lines(handle, buf_size, false);
@@ -64,26 +68,44 @@ CMSStatus display_menu(void) {
   int buf_size = 256;
   FILE *handle = get_file_handle(MENU_FILE_PATH);
   if (handle == NULL) {
-    return CMS_FILE_OPEN_ERR;
+    return CMS_ERROR_FILE_OPEN;
   }
   print_file_lines(handle, buf_size, false);
 
   return CMS_SUCCESS;
 }
 
-static OperationStatus get_user_input(char *buf, Operation *op) {
+static OpStatus get_user_input(char *buf, size_t buf_size, Operation *op) {
   printf("Select an option: ");
-  if (fgets(buf, sizeof buf, stdin) == NULL) {
-    return OP_ERR; // should be a CMS error instead
+  if (fgets(buf, buf_size, stdin) == NULL) {
+    return OP_ERROR_INPUT;
   }
   fflush(stdout);
   putchar('\n');
 
-  // convert inp_buf to int
-  // im kms... ts is super unsafe change to strtok and read the docs
-  *op = atoi(buf);
+  // strip trailing newline/carriage return
+  size_t len = strcspn(buf, "\r\n");
+  buf[len] = '\0';
 
-  return OP_SUCCESS; // should be a CMS_SUCCESS instead
+  // handle empty input
+  if (len == 0) {
+    printf("CMS: Invalid input. Please enter a number.\n");
+    return OP_ERROR_INVALID;
+  }
+
+  // parse using strtol for safe conversion
+  char *endptr;
+  errno = 0;
+  long val = strtol(buf, &endptr, 10);
+
+  // check for conversion errors
+  if (endptr == buf || *endptr != '\0' || errno == ERANGE) {
+    printf("CMS: Invalid input. Please enter a number.\n");
+    return OP_ERROR_INVALID;
+  }
+
+  *op = (Operation)val;
+  return OP_SUCCESS;
 }
 
 static void wait_for_user(void) {
@@ -95,16 +117,39 @@ static void wait_for_user(void) {
 
 // reports cms error message, waits for user input, and returns status
 // note: error_msg should NOT include "CMS: " prefix or trailing newline
-static OperationStatus report_error_and_return(const char *error_msg,
-                                               OperationStatus status) {
+static OpStatus report_error_and_return(const char *error_msg,
+                                        OpStatus status) {
   printf("CMS: %s\n", error_msg);
   wait_for_user();
   return status;
 }
 
+// converts operation status code to human-readable string
+// used for reporting operation failures in main_loop error handling
+static const char *op_status_string(OpStatus status) {
+  switch (status) {
+  case OP_SUCCESS:
+    return "operation succeeded";
+  case OP_ERROR_OPEN:
+    return "failed to open file";
+  case OP_ERROR_INPUT:
+    return "input reading failed";
+  case OP_ERROR_VALIDATION:
+    return "validation failed";
+  case OP_ERROR_DB_NOT_LOADED:
+    return "database not loaded";
+  case OP_ERROR_GENERAL:
+    return "general operation error";
+  case OP_ERROR_INVALID:
+    return "invalid operation";
+  default:
+    return "unknown operation error";
+  }
+}
+
 // CMS operations (not to be confused with db operations)
 // are defined here. feel free to rename them and modify the function signatures
-static OperationStatus open(StudentDatabase *db) {
+static OpStatus open(StudentDatabase *db) {
   // check if database is already loaded
   if (db->is_loaded) {
     // warn user and confirm reload
@@ -113,7 +158,7 @@ static OperationStatus open(StudentDatabase *db) {
     fflush(stdout);
 
     if (!fgets(confirm, sizeof confirm, stdin)) {
-      return OP_ERR;
+      return OP_ERROR_INPUT;
     }
 
     // validate input (case-insensitive)
@@ -123,7 +168,7 @@ static OperationStatus open(StudentDatabase *db) {
     if (len == 0 ||
         (toupper(confirm[0]) != 'Y' && toupper(confirm[0]) != 'N')) {
       printf("CMS: Invalid input. Operation cancelled.\n");
-      return OP_ERR;
+      return OP_ERROR_VALIDATION;
     }
 
     // user cancelled
@@ -174,7 +219,7 @@ static OperationStatus open(StudentDatabase *db) {
 
     wait_for_user();
 
-    return OPEN_FAILURE;
+    return OP_ERROR_OPEN;
   }
 
   // remember the path inside the database struct
@@ -190,22 +235,23 @@ static OperationStatus open(StudentDatabase *db) {
   return OP_SUCCESS;
 }
 
-static OperationStatus show_all(StudentDatabase *db) {
+static OpStatus show_all(StudentDatabase *db) {
   // validate database pointer
   if (!db) {
-    return report_error_and_return("Database error.", OP_ERR);
+    return report_error_and_return("Database error.", OP_ERROR_GENERAL);
   }
 
   // validate database is loaded
   if (!db->is_loaded || db->table_count == 0) {
-    return report_error_and_return("Database not loaded.", OP_ERR);
+    return report_error_and_return("Database not loaded.",
+                                   OP_ERROR_DB_NOT_LOADED);
   }
 
   // access the StudentRecords table
   // note: assumes tables[0] is always StudentRecords per database schema
   StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
   if (!table) {
-    return report_error_and_return("Table error.", OP_ERR);
+    return report_error_and_return("Table error.", OP_ERROR_GENERAL);
   }
 
   // handle empty table
@@ -281,23 +327,24 @@ static OperationStatus show_all(StudentDatabase *db) {
 /*
  * insert new student record into database
  * prompts user for student details and validates input
- * returns: OP_SUCCESS on successful insertion, OP_ERR on failure
+ * returns: OP_SUCCESS on successful insertion, OpStatus error code on failure
  */
-static OperationStatus insert(StudentDatabase *db) {
+static OpStatus insert(StudentDatabase *db) {
   // validate database pointer
   if (!db) {
-    return report_error_and_return("Database error.", OP_ERR);
+    return report_error_and_return("Database error.", OP_ERROR_GENERAL);
   }
 
   // validate database is loaded
   if (!db->is_loaded || db->table_count == 0) {
-    return report_error_and_return("Database not loaded.", OP_ERR);
+    return report_error_and_return("Database not loaded.",
+                                   OP_ERROR_DB_NOT_LOADED);
   }
 
   // access the StudentRecords table
   StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
   if (!table) {
-    return report_error_and_return("Table error.", OP_ERR);
+    return report_error_and_return("Table error.", OP_ERROR_GENERAL);
   }
 
   // prompt for student ID
@@ -306,7 +353,7 @@ static OperationStatus insert(StudentDatabase *db) {
   fflush(stdout);
 
   if (!fgets(id_buf, sizeof id_buf, stdin)) {
-    return report_error_and_return("Failed to read input.", OP_ERR);
+    return report_error_and_return("Failed to read input.", OP_ERROR_INPUT);
   }
 
   // strip trailing newline/carriage return
@@ -315,7 +362,8 @@ static OperationStatus insert(StudentDatabase *db) {
 
   // validate ID is not empty
   if (id_len == 0) {
-    return report_error_and_return("Student ID cannot be empty.", OP_ERR);
+    return report_error_and_return("Student ID cannot be empty.",
+                                   OP_ERROR_VALIDATION);
   }
 
   // parse ID using strtol for safe conversion
@@ -325,13 +373,14 @@ static OperationStatus insert(StudentDatabase *db) {
   // check for conversion errors
   if (*endptr != '\0' || endptr == id_buf) {
     return report_error_and_return(
-        "Invalid student ID format. Please enter a number.", OP_ERR);
+        "Invalid student ID format. Please enter a number.",
+        OP_ERROR_VALIDATION);
   }
 
   // check ID range (fits in int)
   if (id_long < 0 || id_long > 9999999) {
     return report_error_and_return("Student ID must be between 0 and 9999999.",
-                                   OP_ERR);
+                                   OP_ERROR_VALIDATION);
   }
 
   int student_id = (int)id_long;
@@ -342,7 +391,7 @@ static OperationStatus insert(StudentDatabase *db) {
       char err_msg[256];
       snprintf(err_msg, sizeof err_msg, "The record with ID=%d already exists.",
                student_id);
-      return report_error_and_return(err_msg, OP_ERR);
+      return report_error_and_return(err_msg, OP_ERROR_VALIDATION);
     }
   }
 
@@ -352,7 +401,7 @@ static OperationStatus insert(StudentDatabase *db) {
   fflush(stdout);
 
   if (!fgets(name_buf, sizeof name_buf, stdin)) {
-    return report_error_and_return("Failed to read input.", OP_ERR);
+    return report_error_and_return("Failed to read input.", OP_ERROR_INPUT);
   }
 
   // strip trailing newline/carriage return
@@ -361,13 +410,14 @@ static OperationStatus insert(StudentDatabase *db) {
 
   // validate name is not empty
   if (name_len == 0) {
-    return report_error_and_return("Student name cannot be empty.", OP_ERR);
+    return report_error_and_return("Student name cannot be empty.",
+                                   OP_ERROR_VALIDATION);
   }
 
   // check name length fits in StudentRecord
   if (name_len >= 50) {
     return report_error_and_return(
-        "Student name is too long (max 49 characters).", OP_ERR);
+        "Student name is too long (max 49 characters).", OP_ERROR_VALIDATION);
   }
 
   // prompt for programme
@@ -376,7 +426,7 @@ static OperationStatus insert(StudentDatabase *db) {
   fflush(stdout);
 
   if (!fgets(prog_buf, sizeof prog_buf, stdin)) {
-    return report_error_and_return("Failed to read input.", OP_ERR);
+    return report_error_and_return("Failed to read input.", OP_ERROR_INPUT);
   }
 
   // strip trailing newline/carriage return
@@ -385,13 +435,14 @@ static OperationStatus insert(StudentDatabase *db) {
 
   // validate programme is not empty
   if (prog_len == 0) {
-    return report_error_and_return("Programme cannot be empty.", OP_ERR);
+    return report_error_and_return("Programme cannot be empty.",
+                                   OP_ERROR_VALIDATION);
   }
 
   // check programme length fits in StudentRecord
   if (prog_len >= 50) {
     return report_error_and_return(
-        "Programme name is too long (max 49 characters).", OP_ERR);
+        "Programme name is too long (max 49 characters).", OP_ERROR_VALIDATION);
   }
 
   // prompt for mark
@@ -400,7 +451,7 @@ static OperationStatus insert(StudentDatabase *db) {
   fflush(stdout);
 
   if (!fgets(mark_buf, sizeof mark_buf, stdin)) {
-    return report_error_and_return("Failed to read input.", OP_ERR);
+    return report_error_and_return("Failed to read input.", OP_ERROR_INPUT);
   }
 
   // strip trailing newline/carriage return
@@ -409,7 +460,8 @@ static OperationStatus insert(StudentDatabase *db) {
 
   // validate mark is not empty
   if (mark_len == 0) {
-    return report_error_and_return("Mark cannot be empty.", OP_ERR);
+    return report_error_and_return("Mark cannot be empty.",
+                                   OP_ERROR_VALIDATION);
   }
 
   // parse mark using strtof for safe conversion
@@ -419,7 +471,7 @@ static OperationStatus insert(StudentDatabase *db) {
   // check for conversion errors
   if (*mark_endptr != '\0' || mark_endptr == mark_buf) {
     return report_error_and_return(
-        "Invalid mark format. Please enter a number.", OP_ERR);
+        "Invalid mark format. Please enter a number.", OP_ERROR_VALIDATION);
   }
 
   // create student record
@@ -437,7 +489,7 @@ static OperationStatus insert(StudentDatabase *db) {
     char err_msg[256];
     snprintf(err_msg, sizeof err_msg, "Invalid record: %s",
              validation_error_string(val_status));
-    return report_error_and_return(err_msg, OP_ERR);
+    return report_error_and_return(err_msg, OP_ERROR_VALIDATION);
   }
 
   // insert record into table
@@ -446,7 +498,7 @@ static OperationStatus insert(StudentDatabase *db) {
     char err_msg[256];
     snprintf(err_msg, sizeof err_msg, "Failed to insert record: %s",
              db_status_string(db_status));
-    return report_error_and_return(err_msg, OP_ERR);
+    return report_error_and_return(err_msg, OP_ERROR_GENERAL);
   }
 
   // success - display message
@@ -458,21 +510,22 @@ static OperationStatus insert(StudentDatabase *db) {
   return OP_SUCCESS;
 }
 
-static OperationStatus query(StudentDatabase *db) {
+static OpStatus query(StudentDatabase *db) {
   // validate database pointer
   if (!db) {
-    return report_error_and_return("Database error.", OP_ERR);
+    return report_error_and_return("Database error.", OP_ERROR_GENERAL);
   }
 
   // ensure database is loaded before querying
   if (!db->is_loaded || db->table_count == 0) {
-    return report_error_and_return("Database not loaded.", OP_ERR);
+    return report_error_and_return("Database not loaded.",
+                                   OP_ERROR_DB_NOT_LOADED);
   }
 
   // retrieve student table reference
   StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
   if (!table) {
-    return report_error_and_return("Table error.", OP_ERR);
+    return report_error_and_return("Table error.", OP_ERROR_GENERAL);
   }
 
   if (table->record_count == 0) {
@@ -487,72 +540,85 @@ static OperationStatus query(StudentDatabase *db) {
   fflush(stdout);
 
   if (!fgets(input_buf, sizeof input_buf, stdin)) {
-    return report_error_and_return("Failed to read input.", OP_ERR);
+    return report_error_and_return("Failed to read input.", OP_ERROR_INPUT);
   }
 
   size_t len = strcspn(input_buf, "\r\n");
   input_buf[len] = '\0';
 
   if (len == 0) {
-    printf("CMS: Student ID cannot be empty.\n");
-    wait_for_user();
-    return OP_ERR;
+    return report_error_and_return("Student ID cannot be empty.",
+                                   OP_ERROR_VALIDATION);
   }
 
   char *endptr = NULL;
   long parsed_id = strtol(input_buf, &endptr, 10);
   if (endptr == input_buf || *endptr != '\0') {
-    printf("CMS: Please enter a numeric student ID.\n");
-    wait_for_user();
-    return OP_ERR;
+    return report_error_and_return("Please enter a numeric student ID.",
+                                   OP_ERROR_VALIDATION);
   }
 
   if (parsed_id < 0 || parsed_id > INT_MAX) {
-    printf("CMS: Student ID must be within 0 to %d.\n", INT_MAX);
-    wait_for_user();
-    return OP_ERR;
+    return report_error_and_return("Student ID must be within 0 to 2147483647.",
+                                   OP_ERROR_VALIDATION);
   }
 
-  // search for record with matching ID
-  StudentRecord *record = NULL;
-  for (size_t t = 0; t < db->table_count; t++) {
-    StudentTable *tbl = db->tables[t];
-    if (!tbl) {
-      continue;
-    }
+  int student_id = (int)parsed_id;
 
-    for (size_t r = 0; r < tbl->record_count; r++) {
-      if (tbl->records[r].id == (int)parsed_id) {
-        record = &tbl->records[r];
-        break;
-      }
-    }
-    if (record) {
+  // search for record with matching ID in student records table only
+  StudentRecord *record = NULL;
+  for (size_t r = 0; r < table->record_count; r++) {
+    if (table->records[r].id == student_id) {
+      record = &table->records[r];
       break;
     }
   }
 
   if (!record) {
-    printf("CMS: The record with ID=%ld does not exist.\n", parsed_id);
+    printf("CMS: The record with ID=%d does not exist.\n", student_id);
     wait_for_user();
     return OP_SUCCESS;
   }
 
+  // display found record with dynamic column width formatting
   printf("CMS: The record with ID=%d is found in table \"%s\".\n", record->id,
          table->table_name);
   printf("\n");
-  printf("ID\tName\tProgramme\tMark\n");
-  printf("%d\t%s\t%s\t%.2f\n", record->id, record->name, record->prog,
-         record->mark);
+
+  // calculate column widths for single record
+  char format_buf[32];
+  int id_width = snprintf(format_buf, sizeof format_buf, "%d", record->id);
+  int mark_width =
+      snprintf(format_buf, sizeof format_buf, "%.2f", record->mark);
+  int name_width = (int)strlen(record->name);
+  int prog_width = (int)strlen(record->prog);
+
+  // ensure minimum widths for headers
+  if (id_width < 2)
+    id_width = 2; // "ID"
+  if (mark_width < 4)
+    mark_width = 4; // "Mark"
+  if (name_width < 4)
+    name_width = 4; // "Name"
+  if (prog_width < 9)
+    prog_width = 9; // "Programme"
+
+  // print header with dynamic widths
+  printf("%-*s  %-*s  %-*s  %*s\n", id_width, "ID", name_width, "Name",
+         prog_width, "Programme", mark_width, "Mark");
+
+  // print record with dynamic widths
+  printf("%-*d  %-*s  %-*s  %*.2f\n", id_width, record->id, name_width,
+         record->name, prog_width, record->prog, mark_width, record->mark);
 
   wait_for_user();
 
   return OP_SUCCESS;
 }
 
-static OperationStatus adv_query(StudentDatabase *db) {
+static OpStatus adv_query(StudentDatabase *db) {
   if (!db) {
-    return report_error_and_return("Database error.", OP_ERR);
+    return report_error_and_return("Database error.", OP_ERROR_GENERAL);
   }
   // guided prompt that builds a GREP/MARK pipeline then runs adv query
   AdvQueryStatus adv_status = adv_query_run_prompt(db);
@@ -560,11 +626,11 @@ static OperationStatus adv_query(StudentDatabase *db) {
     wait_for_user();
     return OP_SUCCESS;
   }
-  if (adv_status != ADV_QUERY_OK) {
+  if (adv_status != ADV_QUERY_SUCCESS) {
     printf("CMS: Advanced query failed: %s\n",
            adv_query_status_string(adv_status));
     wait_for_user();
-    return OP_ERR;
+    return OP_ERROR_GENERAL;
   }
 
   wait_for_user();
@@ -736,28 +802,31 @@ static OperationStatus update(StudentDatabase *db) {
 /*
  * delete existing student record from database
  * prompts user for student id, confirms deletion, and removes record
- * returns: OP_SUCCESS on successful deletion or cancellation, OP_ERR on failure
+ * returns: OP_SUCCESS on successful deletion or cancellation, OpStatus error
+ * code on failure
  */
-static OperationStatus delete(StudentDatabase *db) {
+static OpStatus delete(StudentDatabase *db) {
   // validate database pointer
   if (!db) {
-    return report_error_and_return("Database error.", OP_ERR);
+    return report_error_and_return("Database error.", OP_ERROR_GENERAL);
   }
 
   // validate database is loaded
   if (!db->is_loaded || db->table_count == 0) {
-    return report_error_and_return("Database not loaded.", OP_ERR);
+    return report_error_and_return("Database not loaded.",
+                                   OP_ERROR_DB_NOT_LOADED);
   }
 
   // access the StudentRecords table
   StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
   if (!table) {
-    return report_error_and_return("Table error.", OP_ERR);
+    return report_error_and_return("Table error.", OP_ERROR_GENERAL);
   }
 
   // check if table has records before prompting
   if (table->record_count == 0) {
-    return report_error_and_return("No records available to delete.", OP_ERR);
+    return report_error_and_return("No records available to delete.",
+                                   OP_ERROR_GENERAL);
   }
 
   // prompt for student id
@@ -766,7 +835,7 @@ static OperationStatus delete(StudentDatabase *db) {
   fflush(stdout);
 
   if (!fgets(id_buf, sizeof id_buf, stdin)) {
-    return report_error_and_return("Failed to read input.", OP_ERR);
+    return report_error_and_return("Failed to read input.", OP_ERROR_INPUT);
   }
 
   // strip trailing newline/carriage return
@@ -775,7 +844,8 @@ static OperationStatus delete(StudentDatabase *db) {
 
   // validate ID is not empty
   if (id_len == 0) {
-    return report_error_and_return("Student ID cannot be empty.", OP_ERR);
+    return report_error_and_return("Student ID cannot be empty.",
+                                   OP_ERROR_VALIDATION);
   }
 
   // parse ID using strtol for safe conversion with overflow detection
@@ -786,13 +856,14 @@ static OperationStatus delete(StudentDatabase *db) {
   // check for conversion errors and overflow
   if (errno == ERANGE || *endptr != '\0' || endptr == id_buf) {
     return report_error_and_return(
-        "Invalid student ID format. Please enter a number.", OP_ERR);
+        "Invalid student ID format. Please enter a number.",
+        OP_ERROR_VALIDATION);
   }
 
   // check ID range (fits in int)
   if (id_long < 0 || id_long > 9999999) {
     return report_error_and_return("Student ID must be between 0 and 9999999.",
-                                   OP_ERR);
+                                   OP_ERROR_VALIDATION);
   }
 
   int student_id = (int)id_long;
@@ -805,7 +876,7 @@ static OperationStatus delete(StudentDatabase *db) {
   fflush(stdout);
 
   if (!fgets(confirm, sizeof confirm, stdin)) {
-    return report_error_and_return("Failed to read input.", OP_ERR);
+    return report_error_and_return("Failed to read input.", OP_ERROR_INPUT);
   }
 
   // strip trailing newline/carriage return
@@ -816,7 +887,7 @@ static OperationStatus delete(StudentDatabase *db) {
   if (confirm_len == 0 ||
       (toupper(confirm[0]) != 'Y' && toupper(confirm[0]) != 'N')) {
     return report_error_and_return("Invalid input. Operation cancelled.",
-                                   OP_ERR);
+                                   OP_ERROR_VALIDATION);
   }
 
   // handle cancellation
@@ -841,7 +912,7 @@ static OperationStatus delete(StudentDatabase *db) {
     char err_msg[256];
     snprintf(err_msg, sizeof err_msg, "Failed to delete record: %s",
              db_status_string(db_status));
-    return report_error_and_return(err_msg, OP_ERR);
+    return report_error_and_return(err_msg, OP_ERROR_GENERAL);
   }
 
   printf("CMS: The record with ID=%d is successfully deleted.\n", student_id);
@@ -853,39 +924,42 @@ static OperationStatus delete(StudentDatabase *db) {
 /*
  * sort student records by id or mark in ascending or descending order
  * prompts user for sort field and order, then performs in-place sort
- * returns: OP_SUCCESS on success, OP_ERR on failure
+ * returns: OP_SUCCESS on success, OpStatus error code on failure
  */
-static OperationStatus sort(StudentDatabase *db) {
+static OpStatus sort(StudentDatabase *db) {
   // validate database pointer
   if (!db) {
-    return report_error_and_return("Database error.", OP_ERR);
+    return report_error_and_return("Database error.", OP_ERROR_GENERAL);
   }
 
   // validate database is loaded
   if (!db->is_loaded || db->table_count == 0) {
-    return report_error_and_return("Database not loaded.", OP_ERR);
+    return report_error_and_return("Database not loaded.",
+                                   OP_ERROR_DB_NOT_LOADED);
   }
 
   // access the StudentRecords table
   StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
   if (!table) {
-    return report_error_and_return("Table error.", OP_ERR);
+    return report_error_and_return("Table error.", OP_ERROR_GENERAL);
   }
 
   // validate records array exists
   if (!table->records) {
-    return report_error_and_return("Table records array is NULL.", OP_ERR);
+    return report_error_and_return("Table records array is NULL.",
+                                   OP_ERROR_GENERAL);
   }
 
   // validate record count is consistent
   if (table->record_count > table->record_capacity) {
     return report_error_and_return("Table record count exceeds capacity.",
-                                   OP_ERR);
+                                   OP_ERROR_VALIDATION);
   }
 
   // check if table has records
   if (table->record_count == 0) {
-    return report_error_and_return("No records available to sort.", OP_ERR);
+    return report_error_and_return("No records available to sort.",
+                                   OP_ERROR_GENERAL);
   }
 
   char field_buf[10];
@@ -896,7 +970,7 @@ static OperationStatus sort(StudentDatabase *db) {
   fflush(stdout);
 
   if (!fgets(field_buf, sizeof field_buf, stdin)) {
-    return report_error_and_return("Failed to read input.", OP_ERR);
+    return report_error_and_return("Failed to read input.", OP_ERROR_INPUT);
   }
 
   // strip trailing newline/carriage return
@@ -916,7 +990,8 @@ static OperationStatus sort(StudentDatabase *db) {
     field = field_buf[0];
   } else {
     return report_error_and_return(
-        "Invalid field. Enter '1' for ID or '2' for Mark.", OP_ERR);
+        "Invalid field. Enter '1' for ID or '2' for Mark.",
+        OP_ERROR_VALIDATION);
   }
 
   char order_buf[10];
@@ -927,7 +1002,7 @@ static OperationStatus sort(StudentDatabase *db) {
   fflush(stdout);
 
   if (!fgets(order_buf, sizeof order_buf, stdin)) {
-    return report_error_and_return("Failed to read input.", OP_ERR);
+    return report_error_and_return("Failed to read input.", OP_ERROR_INPUT);
   }
 
   // strip trailing newline/carriage return
@@ -949,7 +1024,7 @@ static OperationStatus sort(StudentDatabase *db) {
   } else {
     return report_error_and_return(
         "Invalid order. Enter 'A' for Ascending or 'D' for Descending.",
-        OP_ERR);
+        OP_ERROR_VALIDATION);
   }
 
   // convert user input to sorting module enums
@@ -974,23 +1049,24 @@ static OperationStatus sort(StudentDatabase *db) {
 /*
  * save database to file
  * delegates file writing to database module
- * returns: OP_SUCCESS on success, OP_ERR on failure
+ * returns: OP_SUCCESS on success, OpStatus error code on failure
  */
-static OperationStatus save(StudentDatabase *db) {
+static OpStatus save(StudentDatabase *db) {
   // validate database pointer
   if (!db) {
-    return report_error_and_return("Database error.", OP_ERR);
+    return report_error_and_return("Database error.", OP_ERROR_GENERAL);
   }
 
   // validate database is loaded
   if (!db->is_loaded || db->table_count == 0) {
-    return report_error_and_return("Database not loaded.", OP_ERR);
+    return report_error_and_return("Database not loaded.",
+                                   OP_ERROR_DB_NOT_LOADED);
   }
 
   // validate we have a filepath from OPEN
   if (db->filepath[0] == '\0') {
     return report_error_and_return("No file path stored for this database.",
-                                   OP_ERR);
+                                   OP_ERROR_VALIDATION);
   }
 
   // delegate save operation to database module
@@ -999,7 +1075,7 @@ static OperationStatus save(StudentDatabase *db) {
     char err_msg[256];
     snprintf(err_msg, sizeof err_msg, "Failed to save database: %s",
              db_status_string(db_status));
-    return report_error_and_return(err_msg, OP_ERR);
+    return report_error_and_return(err_msg, OP_ERROR_GENERAL);
   }
 
   printf("CMS: The database file \"%s\" is successfully saved.\n",
@@ -1009,8 +1085,8 @@ static OperationStatus save(StudentDatabase *db) {
   return OP_SUCCESS;
 }
 
-static OperationStatus operation_router(Operation op, StudentDatabase *db) {
-  OperationStatus status;
+static OpStatus operation_router(Operation op, StudentDatabase *db) {
+  OpStatus status;
 
   switch (op) {
   case OPEN:
@@ -1045,7 +1121,7 @@ static OperationStatus operation_router(Operation op, StudentDatabase *db) {
     return OP_SUCCESS;
   default:
     printf("invalid operation type shi\n");
-    return OP_INVALID;
+    return OP_ERROR_INVALID;
   }
 }
 
@@ -1063,12 +1139,12 @@ CMSStatus main_loop(void) {
   StudentDatabase *db = db_init();
   if (!db) {
     fprintf(stderr, "Failed to initialise database\n");
-    return CMS_DB_INIT_FAILURE;
+    return CMS_ERROR_DB_INIT;
   }
 
   char inp_buf[100];
   Operation op;
-  OperationStatus op_status;
+  OpStatus op_status;
 
   // main loop
   do {
@@ -1078,17 +1154,18 @@ CMSStatus main_loop(void) {
               cms_status_string(status));
       return status;
     }
-    op_status = get_user_input(inp_buf, &op);
-    // if (op_status != OP_SUCCESS) {
-    //   fprintf(stderr, "Failed to perform operation: %s\n",
-    //   operation_status_string(op_status)); return status;
-    // }
+    op_status = get_user_input(inp_buf, sizeof inp_buf, &op);
+    if (op_status != OP_SUCCESS) {
+      // user input errors already print helpful messages
+      // continue to allow retry
+      continue;
+    }
+
     op_status = operation_router(op, db);
+    // operation errors are handled within operation functions via
+    // report_error_and_return(), which displays error and waits for user
+    // continue regardless to allow user to try another operation
     (void)op_status;
-    // if (op_status != OP_SUCCESS) {
-    //   fprintf(stderr, "Failed to perform operation: %s\n",
-    //   operation_status_string(op_status)); return status;
-    // }
   } while (op != EXIT);
 
   db_free(db);
@@ -1098,18 +1175,18 @@ CMSStatus main_loop(void) {
 const char *cms_status_string(CMSStatus status) {
   switch (status) {
   case CMS_SUCCESS:
-    return "operation completed successfully";
-  case CMS_INIT_FAILURE:
-    return "failed initialisation step";
-  case CMS_DB_INIT_FAILURE:
-    return "database failed to initialise";
-  case CMS_INVALID_ARG:
-    return "invalid argument received";
-  case CMS_FILE_OPEN_ERR:
-    return "failed to retrieve file handle";
-  case CMS_FILE_IO_ERR:
-    return "failed to complete operation on file";
+    return "operation succeeded";
+  case CMS_ERROR_INIT:
+    return "CMS initialisation failed";
+  case CMS_ERROR_DB_INIT:
+    return "database initialisation failed";
+  case CMS_ERROR_INVALID_ARGUMENT:
+    return "invalid argument provided";
+  case CMS_ERROR_FILE_OPEN:
+    return "failed to open file";
+  case CMS_ERROR_FILE_IO:
+    return "file I/O operation failed";
   default:
-    return "unknown error";
+    return "unknown CMS error";
   }
 }

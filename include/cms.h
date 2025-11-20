@@ -4,12 +4,12 @@
 // enums provide meaningful identifiers for status/errors at various failure
 // points
 typedef enum {
-  CMS_SUCCESS,         // when an operation executes without issues
-  CMS_INIT_FAILURE,    // failed initialise step
-  CMS_DB_INIT_FAILURE, // database failed to initialise
-  CMS_INVALID_ARG,     // failed to receive expected arguments
-  CMS_FILE_OPEN_ERR,   // failed to get file handle
-  CMS_FILE_IO_ERR,     // failed any file read/write operations etc
+  CMS_SUCCESS = 0,            // operation completed successfully
+  CMS_ERROR_INIT,             // cms initialisation failed
+  CMS_ERROR_DB_INIT,          // database initialisation failed
+  CMS_ERROR_INVALID_ARGUMENT, // invalid argument provided
+  CMS_ERROR_FILE_OPEN,        // failed to open file
+  CMS_ERROR_FILE_IO           // file i/o operation failed
 } CMSStatus;
 
 CMSStatus cms_init(void);
