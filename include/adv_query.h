@@ -5,11 +5,11 @@
 
 // status codes for advanced query pipeline execution
 typedef enum {
-  ADV_QUERY_OK = 0,
-  ADV_QUERY_ERROR_INVALID_ARGUMENT,
-  ADV_QUERY_ERROR_EMPTY_DATABASE,
-  ADV_QUERY_ERROR_PARSE,
-  ADV_QUERY_ERROR_MEMORY
+  ADV_QUERY_SUCCESS = 0,            // operation completed successfully
+  ADV_QUERY_ERROR_INVALID_ARGUMENT, // invalid argument provided
+  ADV_QUERY_ERROR_EMPTY_DATABASE,   // database is empty
+  ADV_QUERY_ERROR_PARSE,            // failed to parse query
+  ADV_QUERY_ERROR_MEMORY            // memory allocation failed
 } AdvQueryStatus;
 
 AdvQueryStatus adv_query_execute(StudentDatabase *db, const char *pipeline);

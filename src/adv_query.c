@@ -264,7 +264,7 @@ AdvQueryStatus adv_query_execute(StudentDatabase *db, const char *pipeline) {
   }
   if (total == 0) {
     printf("ADVQUERY: No records matched the pipeline.\n");
-    return ADV_QUERY_OK;
+    return ADV_QUERY_SUCCESS;
   }
 
   unsigned char *keep = malloc(total);
@@ -347,17 +347,17 @@ AdvQueryStatus adv_query_execute(StudentDatabase *db, const char *pipeline) {
   free(records);
   free(keep);
   free(working);
-  return ADV_QUERY_OK;
+  return ADV_QUERY_SUCCESS;
 }
 
 const char *adv_query_status_string(AdvQueryStatus status) {
   switch (status) {
-  case ADV_QUERY_OK:
-    return "advanced query succeeded";
+  case ADV_QUERY_SUCCESS:
+    return "operation succeeded";
   case ADV_QUERY_ERROR_INVALID_ARGUMENT:
-    return "invalid argument";
+    return "invalid argument provided";
   case ADV_QUERY_ERROR_EMPTY_DATABASE:
-    return "database not loaded";
+    return "database contains no records";
   case ADV_QUERY_ERROR_PARSE:
     return "advanced query parse failed";
   case ADV_QUERY_ERROR_MEMORY:
@@ -636,7 +636,7 @@ AdvQueryStatus adv_query_run_prompt(StudentDatabase *db) {
   AdvQuerySelection selections[8];
   size_t selection_count = 0;
   if (!adv_query_collect_fields(selections, &selection_count)) {
-    return ADV_QUERY_OK;
+    return ADV_QUERY_SUCCESS;
   }
 
   adv_query_collect_values(selections, selection_count);
