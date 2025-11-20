@@ -60,3 +60,5 @@ dkms.conf
 
 # debug information files
 *.dwo
+.vscode/
+.clangd

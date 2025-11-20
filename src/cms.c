@@ -1,9 +1,11 @@
 #include "cms.h"
 #include "database.h"
 #include "parser.h"
+#include "sorting.h"
 #include "utils.h"
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -96,106 +98,6 @@ static OperationStatus report_error_and_return(const char *error_msg,
   printf("CMS: %s\n", error_msg);
   wait_for_user();
   return status;
-}
-
-/*
- * sort student records using bubble sort algorithm
- * sorts in-place by modifying the records array
- * stable sort - maintains relative order of equal elements
- */
-static void bubble_sort_records(StudentRecord *records, size_t count,
-                                 int (*compare)(const StudentRecord*, const StudentRecord*)) {
-  // defensive check
-  if (!records || count == 0 || !compare) {
-    return;
-  }
-
-  // bubble sort with early termination optimisation
-  for (size_t i = 0; i < count - 1; i++) {
-    int swapped = 0;
-
-    for (size_t j = 0; j < count - i - 1; j++) {
-      // compare adjacent elements
-      if (compare(&records[j], &records[j + 1]) > 0) {
-        // swap records
-        StudentRecord temp = records[j];
-        records[j] = records[j + 1];
-        records[j + 1] = temp;
-        swapped = 1;
-      }
-    }
-
-    // if no swaps occurred, array is sorted
-    if (!swapped) {
-      break;
-    }
-  }
-}
-
-/*
- * compare student records by id in ascending order
- * returns: negative if a < b, zero if a == b, positive if a > b
- */
-static int compare_id_asc(const StudentRecord *a, const StudentRecord *b) {
-  // defensive null checks
-  if (!a || !b) return 0;
-
-  // safe comparison - avoid integer overflow from subtraction
-  if (a->id < b->id) return -1;
-  if (a->id > b->id) return 1;
-  return 0;
-}
-
-/*
- * compare student records by id in descending order
- * returns: negative if a > b, zero if a == b, positive if a < b
- */
-static int compare_id_desc(const StudentRecord *a, const StudentRecord *b) {
-  // defensive null checks
-  if (!a || !b) return 0;
-
-  // independent implementation - not just reversed parameter order
-  if (a->id > b->id) return -1;
-  if (a->id < b->id) return 1;
-  return 0;
-}
-
-/*
- * compare student records by mark in ascending order
- * includes tie-breaker: sorts by id when marks are equal
- * returns: negative if a < b, zero if a == b, positive if a > b
- */
-static int compare_mark_asc(const StudentRecord *a, const StudentRecord *b) {
-  // defensive null checks
-  if (!a || !b) return 0;
-
-  // safe float comparison - validation ensures marks in [0.0, 100.0]
-  if (a->mark < b->mark) return -1;
-  if (a->mark > b->mark) return 1;
-
-  // tie-breaker: sort by id when marks are equal (ensures stable sort)
-  if (a->id < b->id) return -1;
-  if (a->id > b->id) return 1;
-  return 0;
-}
-
-/*
- * compare student records by mark in descending order
- * includes tie-breaker: sorts by id when marks are equal
- * returns: negative if a > b, zero if a == b, positive if a < b
- */
-static int compare_mark_desc(const StudentRecord *a, const StudentRecord *b) {
-  // defensive null checks
-  if (!a || !b) return 0;
-
-  // independent implementation with tie-breaker
-  if (a->mark > b->mark) return -1;
-  if (a->mark < b->mark) return 1;
-
-  // tie-breaker: sort by id when marks are equal
-  if (a->id < b->id) return -1;
-  if (a->id > b->id) return 1;
-  return 0;
 }
 
 // CMS operations (not to be confused with db operations)
@@ -554,9 +456,94 @@ static OperationStatus insert(StudentDatabase *db) {
   return OP_SUCCESS;
 }
 
-OperationStatus query() {
-  // your code here
-  printf("you selected query!\n");
+static OperationStatus query(StudentDatabase *db) {
+  // validate database pointer
+  if (!db) {
+    return report_error_and_return("Database error.", OP_ERR);
+  }
+
+  // ensure database is loaded before querying
+  if (!db->is_loaded || db->table_count == 0) {
+    return report_error_and_return("Database not loaded.", OP_ERR);
+  }
+
+  // retrieve student table reference
+  StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
+  if (!table) {
+    return report_error_and_return("Table error.", OP_ERR);
+  }
+
+  if (table->record_count == 0) {
+    printf("CMS: No records available to query.\n");
+    wait_for_user();
+    return OP_SUCCESS;
+  }
+
+  // prompt user for student ID
+  char input_buf[64];
+  printf("Enter student ID to search: ");
+  fflush(stdout);
+
+  if (!fgets(input_buf, sizeof input_buf, stdin)) {
+    return report_error_and_return("Failed to read input.", OP_ERR);
+  }
+
+  size_t len = strcspn(input_buf, "\r\n");
+  input_buf[len] = '\0';
+
+  if (len == 0) {
+    printf("CMS: Student ID cannot be empty.\n");
+    wait_for_user();
+    return OP_ERR;
+  }
+
+  char *endptr = NULL;
+  long parsed_id = strtol(input_buf, &endptr, 10);
+  if (endptr == input_buf || *endptr != '\0') {
+    printf("CMS: Please enter a numeric student ID.\n");
+    wait_for_user();
+    return OP_ERR;
+  }
+
+  if (parsed_id < 0 || parsed_id > INT_MAX) {
+    printf("CMS: Student ID must be within 0 to %d.\n", INT_MAX);
+    wait_for_user();
+    return OP_ERR;
+  }
+
+  // search for record with matching ID
+  StudentRecord *record = NULL;
+  for (size_t t = 0; t < db->table_count; t++) {
+    StudentTable *tbl = db->tables[t];
+    if (!tbl) {
+      continue;
+    }
+
+    for (size_t r = 0; r < tbl->record_count; r++) {
+      if (tbl->records[r].id == (int)parsed_id) {
+        record = &tbl->records[r];
+        break;
+      }
+    }
+    if (record) {
+      break;
+    }
+  }
+
+  if (!record) {
+    printf("CMS: The record with ID=%ld does not exist.\n", parsed_id);
+    wait_for_user();
+    return OP_SUCCESS;
+  }
+
+  printf("CMS: The record with ID=%d is found in table \"%s\".\n", record->id,
+         table->table_name);
+  printf("\n");
+  printf("ID\tName\tProgramme\tMark\n");
+  printf("%d\t%s\t%s\t%.2f\n", record->id, record->name, record->prog,
+         record->mark);
+
+  wait_for_user();
 
   return OP_SUCCESS;
 }
@@ -714,7 +701,8 @@ static OperationStatus sort(StudentDatabase *db) {
 
   // validate record count is consistent
   if (table->record_count > table->record_capacity) {
-    return report_error_and_return("Table record count exceeds capacity.", OP_ERR);
+    return report_error_and_return("Table record count exceeds capacity.",
+                                   OP_ERR);
   }
 
   // check if table has records
@@ -750,7 +738,7 @@ static OperationStatus sort(StudentDatabase *db) {
     field = field_buf[0];
   } else {
     return report_error_and_return(
-      "Invalid field. Enter '1' for ID or '2' for Mark.", OP_ERR);
+        "Invalid field. Enter '1' for ID or '2' for Mark.", OP_ERR);
   }
 
   char order_buf[10];
@@ -782,37 +770,22 @@ static OperationStatus sort(StudentDatabase *db) {
     order = toupper(order_buf[0]);
   } else {
     return report_error_and_return(
-      "Invalid order. Enter 'A' for Ascending or 'D' for Descending.", OP_ERR);
+        "Invalid order. Enter 'A' for Ascending or 'D' for Descending.",
+        OP_ERR);
   }
 
-  // select appropriate comparator function based on field and order
-  int (*comparator)(const StudentRecord*, const StudentRecord*) = NULL;
+  // convert user input to sorting module enums
+  SortField sort_field = (field == '1') ? SORT_FIELD_ID : SORT_FIELD_MARK;
+  SortOrder sort_order = (order == 'A') ? SORT_ORDER_ASC : SORT_ORDER_DESC;
 
-  if (field == '1' && order == 'A') {
-    comparator = compare_id_asc;
-  } else if (field == '1' && order == 'D') {
-    comparator = compare_id_desc;
-  } else if (field == '2' && order == 'A') {
-    comparator = compare_mark_asc;
-  } else if (field == '2' && order == 'D') {
-    comparator = compare_mark_desc;
-  }
-
-  // defensive check (should never happen given validation above)
-  if (!comparator) {
-    return report_error_and_return("Internal error: no comparator selected.", OP_ERR);
-  }
-
-  // perform bubble sort using selected comparator
-  bubble_sort_records(table->records, table->record_count, comparator);
+  // perform sort using sorting module
+  sort_records(table->records, table->record_count, sort_field, sort_order);
 
   const char *field_name = (field == '1') ? "ID" : "Mark";
   const char *order_name = (order == 'A') ? "ascending" : "descending";
 
   printf("CMS: %zu record%s successfully sorted by %s in %s order.\n",
-         table->record_count,
-         (table->record_count == 1) ? "" : "s",
-         field_name,
+         table->record_count, (table->record_count == 1) ? "" : "s", field_name,
          order_name);
 
   wait_for_user();
@@ -822,7 +795,7 @@ static OperationStatus sort(StudentDatabase *db) {
 
 /*
  * save database to file
- * writes database metadata, table structure, and all records to filepath
+ * delegates file writing to database module
  * returns: OP_SUCCESS on success, OP_ERR on failure
  */
 static OperationStatus save(StudentDatabase *db) {
@@ -842,50 +815,12 @@ static OperationStatus save(StudentDatabase *db) {
                                    OP_ERR);
   }
 
-  // access the StudentRecords table (by convention, index 0)
-  StudentTable *table = db->tables[STUDENT_RECORDS_TABLE_INDEX];
-  if (!table) {
-    return report_error_and_return("Table error.", OP_ERR);
-  }
-
-  // validate table has column headers
-  if (!table->column_headers || table->column_count == 0) {
-    return report_error_and_return("Table has no column headers.", OP_ERR);
-  }
-
-  FILE *fp = fopen(db->filepath, "w");
-  if (!fp) {
+  // delegate save operation to database module
+  DBStatus db_status = db_save(db, db->filepath);
+  if (db_status != DB_SUCCESS) {
     char err_msg[256];
-    snprintf(err_msg, sizeof(err_msg), "Failed to open file '%s' for writing.",
-             db->filepath);
-    return report_error_and_return(err_msg, OP_ERR);
-  }
-
-  // write header metadata
-  fprintf(fp, "Database Name: %s\n", db->db_name);
-  fprintf(fp, "Authors: %s\n", db->authors);
-  fprintf(fp, "\n");
-  fprintf(fp, "Table Name: %s\n", table->table_name);
-
-  // write column headers (ID, Name, Programme, Mark)
-  for (size_t i = 0; i < table->column_count; i++) {
-    fprintf(fp, "%s", table->column_headers[i]);
-    if (i + 1 < table->column_count) {
-      fputc('\t', fp);
-    }
-  }
-  fputc('\n', fp);
-
-  // write all records (including inserted/updated ones)
-  for (size_t i = 0; i < table->record_count; i++) {
-    const StudentRecord *r = &table->records[i];
-    fprintf(fp, "%d\t%s\t%s\t%.2f\n", r->id, r->name, r->prog, r->mark);
-  }
-
-  if (fclose(fp) != 0) {
-    char err_msg[256];
-    snprintf(err_msg, sizeof(err_msg),
-             "Failed to close file '%s' after writing.", db->filepath);
+    snprintf(err_msg, sizeof err_msg, "Failed to save database: %s",
+             db_status_string(db_status));
     return report_error_and_return(err_msg, OP_ERR);
   }
 
@@ -910,7 +845,7 @@ static OperationStatus operation_router(Operation op, StudentDatabase *db) {
     status = insert(db);
     return status;
   case QUERY:
-    status = query();
+    status = query(db);
     return status;
   case UPDATE:
     status = update();
@@ -974,6 +909,7 @@ CMSStatus main_loop(void) {
     // }
   } while (op != EXIT);
 
+  db_free(db);
   return CMS_SUCCESS;
 }
 

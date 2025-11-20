@@ -1,5 +1,5 @@
-#include <stdlib.h>
 #include "cms.h"
+#include <stdlib.h>
 
 // TODO: abstract away public facing interface with simpler API calls
 
