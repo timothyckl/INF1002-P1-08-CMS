@@ -19,7 +19,8 @@
 // we define these enums here (and not in the header) because the will not be
 // used anywhere else in the codebase
 typedef enum {
-  OPEN = 1,
+  EXIT = 0,
+  OPEN,
   SHOW_ALL,
   INSERT,
   QUERY,
@@ -27,8 +28,7 @@ typedef enum {
   DELETE,
   SAVE,
   SORT,
-  EXIT,
-  ADV_QUERY = 10,
+  ADV_QUERY,
 } Operation;
 
 typedef enum {
@@ -71,19 +71,38 @@ CMSStatus display_menu(void) {
   return CMS_SUCCESS;
 }
 
-static OperationStatus get_user_input(char *buf, Operation *op) {
+static OperationStatus get_user_input(char *buf, size_t buf_size,
+                                      Operation *op) {
   printf("Select an option: ");
-  if (fgets(buf, sizeof buf, stdin) == NULL) {
-    return OP_ERR; // should be a CMS error instead
+  if (fgets(buf, buf_size, stdin) == NULL) {
+    return OP_ERR;
   }
   fflush(stdout);
   putchar('\n');
 
-  // convert inp_buf to int
-  // im kms... ts is super unsafe change to strtok and read the docs
-  *op = atoi(buf);
+  // strip trailing newline/carriage return
+  size_t len = strcspn(buf, "\r\n");
+  buf[len] = '\0';
 
-  return OP_SUCCESS; // should be a CMS_SUCCESS instead
+  // handle empty input
+  if (len == 0) {
+    printf("CMS: Invalid input. Please enter a number.\n");
+    return OP_INVALID;
+  }
+
+  // parse using strtol for safe conversion
+  char *endptr;
+  errno = 0;
+  long val = strtol(buf, &endptr, 10);
+
+  // check for conversion errors
+  if (endptr == buf || *endptr != '\0' || errno == ERANGE) {
+    printf("CMS: Invalid input. Please enter a number.\n");
+    return OP_INVALID;
+  }
+
+  *op = (Operation)val;
+  return OP_SUCCESS;
 }
 
 static void wait_for_user(void) {
@@ -494,56 +513,68 @@ static OperationStatus query(StudentDatabase *db) {
   input_buf[len] = '\0';
 
   if (len == 0) {
-    printf("CMS: Student ID cannot be empty.\n");
-    wait_for_user();
-    return OP_ERR;
+    return report_error_and_return("Student ID cannot be empty.", OP_ERR);
   }
 
   char *endptr = NULL;
   long parsed_id = strtol(input_buf, &endptr, 10);
   if (endptr == input_buf || *endptr != '\0') {
-    printf("CMS: Please enter a numeric student ID.\n");
-    wait_for_user();
-    return OP_ERR;
+    return report_error_and_return("Please enter a numeric student ID.",
+                                   OP_ERR);
   }
 
   if (parsed_id < 0 || parsed_id > INT_MAX) {
-    printf("CMS: Student ID must be within 0 to %d.\n", INT_MAX);
-    wait_for_user();
-    return OP_ERR;
+    return report_error_and_return(
+        "Student ID must be within 0 to 2147483647.", OP_ERR);
   }
 
-  // search for record with matching ID
-  StudentRecord *record = NULL;
-  for (size_t t = 0; t < db->table_count; t++) {
-    StudentTable *tbl = db->tables[t];
-    if (!tbl) {
-      continue;
-    }
+  int student_id = (int)parsed_id;
 
-    for (size_t r = 0; r < tbl->record_count; r++) {
-      if (tbl->records[r].id == (int)parsed_id) {
-        record = &tbl->records[r];
-        break;
-      }
-    }
-    if (record) {
+  // search for record with matching ID in student records table only
+  StudentRecord *record = NULL;
+  for (size_t r = 0; r < table->record_count; r++) {
+    if (table->records[r].id == student_id) {
+      record = &table->records[r];
       break;
     }
   }
 
   if (!record) {
-    printf("CMS: The record with ID=%ld does not exist.\n", parsed_id);
+    printf("CMS: The record with ID=%d does not exist.\n", student_id);
     wait_for_user();
     return OP_SUCCESS;
   }
 
+  // display found record with dynamic column width formatting
   printf("CMS: The record with ID=%d is found in table \"%s\".\n", record->id,
          table->table_name);
   printf("\n");
-  printf("ID\tName\tProgramme\tMark\n");
-  printf("%d\t%s\t%s\t%.2f\n", record->id, record->name, record->prog,
-         record->mark);
+
+  // calculate column widths for single record
+  char format_buf[32];
+  int id_width = snprintf(format_buf, sizeof format_buf, "%d", record->id);
+  int mark_width =
+      snprintf(format_buf, sizeof format_buf, "%.2f", record->mark);
+  int name_width = (int)strlen(record->name);
+  int prog_width = (int)strlen(record->prog);
+
+  // ensure minimum widths for headers
+  if (id_width < 2)
+    id_width = 2; // "ID"
+  if (mark_width < 4)
+    mark_width = 4; // "Mark"
+  if (name_width < 4)
+    name_width = 4; // "Name"
+  if (prog_width < 9)
+    prog_width = 9; // "Programme"
+
+  // print header with dynamic widths
+  printf("%-*s  %-*s  %-*s  %*s\n", id_width, "ID", name_width, "Name",
+         prog_width, "Programme", mark_width, "Mark");
+
+  // print record with dynamic widths
+  printf("%-*d  %-*s  %-*s  %*.2f\n", id_width, record->id, name_width,
+         record->name, prog_width, record->prog, mark_width, record->mark);
 
   wait_for_user();
 
@@ -923,7 +954,7 @@ CMSStatus main_loop(void) {
               cms_status_string(status));
       return status;
     }
-    op_status = get_user_input(inp_buf, &op);
+    op_status = get_user_input(inp_buf, sizeof inp_buf, &op);
     // if (op_status != OP_SUCCESS) {
     //   fprintf(stderr, "Failed to perform operation: %s\n",
     //   operation_status_string(op_status)); return status;
