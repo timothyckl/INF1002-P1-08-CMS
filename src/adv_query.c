@@ -110,6 +110,7 @@ static size_t collect_records(StudentDatabase *db, StudentRecord ***out) {
   return total;
 }
 
+// substring check ignoring case
 static int contains_case_insensitive(const char *haystack, const char *needle) {
   if (!haystack || !needle || *needle == '\0') {
     return 0;
@@ -364,4 +365,285 @@ const char *adv_query_status_string(AdvQueryStatus status) {
   default:
     return "unknown advanced query error";
   }
+}
+
+/*
+ * interactive wrapper used by menus: guides the user to build a pipeline
+ * then executes it via adv_query_execute
+ */
+static void adv_query_trim_newline(char *text) {
+  if (!text) {
+    return;
+  }
+  size_t len = strcspn(text, "\r\n");
+  text[len] = '\0';
+}
+
+static int adv_query_read_line(const char *prompt, char *buffer, size_t size) {
+  printf("%s", prompt);
+  if (!fgets(buffer, size, stdin)) {
+    return 0;
+  }
+  adv_query_trim_newline(buffer);
+  return 1;
+}
+
+static int adv_query_prompt_int(const char *prompt, int *out_value) {
+  char buffer[256];
+  if (!adv_query_read_line(prompt, buffer, sizeof(buffer))) {
+    return 0;
+  }
+  char *endptr = NULL;
+  long parsed = strtol(buffer, &endptr, 10);
+  if (endptr == buffer || *endptr != '\0') {
+    return -1;
+  }
+  *out_value = (int)parsed;
+  return 1;
+}
+
+// simple container for a single guided prompt selection
+typedef struct {
+  int field; // 1=Name, 2=Programme, 3=Mark
+  char op;   // only used for Mark comparisons
+  char value[256];
+} AdvQuerySelection;
+
+static int adv_query_prompt_field(void) {
+  while (1) {
+    printf("\nPick a field to filter:\n");
+    printf(" 1) Name\n");
+    printf(" 2) Programme\n");
+    printf(" 3) Mark\n");
+    printf(" 0) Cancel\n");
+    int choice = 0;
+    int rc = adv_query_prompt_int("Select option: ", &choice);
+    if (rc == 0) {
+      return 0;
+    }
+    if (rc == 1 && choice >= 0 && choice <= 3) {
+      return choice;
+    }
+    printf("Invalid choice. Try again.\n");
+  }
+}
+
+static int adv_query_yes_no(const char *prompt) {
+  char buffer[256];
+  while (1) {
+    if (!adv_query_read_line(prompt, buffer, sizeof(buffer))) {
+      return 0;
+    }
+    if (buffer[0] == '\0') {
+      continue;
+    }
+    char c = (char)tolower((unsigned char)buffer[0]);
+    if (c == 'y') {
+      return 1;
+    }
+    if (c == 'n') {
+      return 0;
+    }
+    printf("Please enter Y or N.\n");
+  }
+}
+
+static void adv_query_sanitize_quotes(char *text) {
+  for (char *cursor = text; *cursor; cursor++) {
+    if (*cursor == '"') {
+      *cursor = '\'';
+    }
+  }
+}
+
+static void adv_query_prompt_text(const char *label, char *output,
+                                  size_t size) {
+  char buffer[256];
+  while (1) {
+    char prompt[64];
+    snprintf(prompt, sizeof(prompt), "Enter %s to search: ", label);
+    if (!adv_query_read_line(prompt, buffer, sizeof(buffer))) {
+      continue;
+    }
+    if (buffer[0] == '\0') {
+      printf("Input cannot be empty.\n");
+      continue;
+    }
+    adv_query_sanitize_quotes(buffer);
+    strncpy(output, buffer, size - 1);
+    output[size - 1] = '\0';
+    break;
+  }
+}
+
+static char adv_query_prompt_mark_op(void) {
+  while (1) {
+    printf("\nMark comparison\n");
+    printf(" 1) Greater than\n");
+    printf(" 2) Less than\n");
+    printf(" 3) Equal to\n");
+    int choice = 0;
+    int rc = adv_query_prompt_int("Select option: ", &choice);
+    if (rc != 1) {
+      printf("Please enter 1, 2, or 3.\n");
+      continue;
+    }
+    if (choice == 1) {
+      return '>';
+    }
+    if (choice == 2) {
+      return '<';
+    }
+    if (choice == 3) {
+      return '=';
+    }
+    printf("Please enter 1, 2, or 3.\n");
+  }
+}
+
+static void adv_query_prompt_mark_value(char *output, size_t size) {
+  char buffer[256];
+  while (1) {
+    if (!adv_query_read_line("Enter mark value: ", buffer, sizeof(buffer))) {
+      continue;
+    }
+    if (buffer[0] == '\0') {
+      printf("Mark cannot be empty.\n");
+      continue;
+    }
+    strncpy(output, buffer, size - 1);
+    output[size - 1] = '\0';
+    break;
+  }
+}
+
+static const char *adv_query_field_token(int field_choice) {
+  switch (field_choice) {
+  case 1:
+    return "NAME";
+  case 2:
+    return "PROGRAMME";
+  case 3:
+    return "MARK";
+  default:
+    return "";
+  }
+}
+
+static const char *adv_query_field_label(int field_choice) {
+  switch (field_choice) {
+  case 1:
+    return "Name";
+  case 2:
+    return "Programme";
+  case 3:
+    return "Mark";
+  default:
+    return "Unknown";
+  }
+}
+
+static int adv_query_field_used(const AdvQuerySelection *selections,
+                                size_t count, int field_choice) {
+  for (size_t i = 0; i < count; i++) {
+    if (selections[i].field == field_choice) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int adv_query_collect_fields(AdvQuerySelection *selections,
+                                    size_t *selection_count) {
+  size_t count = 0;
+  while (count < 8) {
+    int choice = adv_query_prompt_field();
+    if (choice == 0) {
+      if (count == 0) {
+        printf("Cancelled advanced search.\n");
+        *selection_count = 0;
+        return 0;
+      }
+      printf("Use the Y/N prompt to finish.\n");
+      continue;
+    }
+    if (adv_query_field_used(selections, count, choice)) {
+      printf("You already selected %s. Pick another field.\n",
+             adv_query_field_label(choice));
+      continue;
+    }
+    selections[count].field = choice;
+    selections[count].op = '=';
+    selections[count].value[0] = '\0';
+    count++;
+    if (count >= 8) {
+      printf("Reached maximum number of fields (8).\n");
+      break;
+    }
+    if (!adv_query_yes_no("Add another field? (Y/N): ")) {
+      break;
+    }
+  }
+  *selection_count = count;
+  return count > 0;
+}
+
+static void adv_query_collect_values(AdvQuerySelection *selections,
+                                     size_t count) {
+  for (size_t i = 0; i < count; i++) {
+    if (selections[i].field == 3) {
+      selections[i].op = adv_query_prompt_mark_op();
+      adv_query_prompt_mark_value(selections[i].value,
+                                  sizeof(selections[i].value));
+    } else {
+      adv_query_prompt_text(adv_query_field_label(selections[i].field),
+                            selections[i].value, sizeof(selections[i].value));
+    }
+  }
+}
+
+static void adv_query_build_pipeline(const AdvQuerySelection *selections,
+                                     size_t count, char *pipeline,
+                                     size_t size) {
+  pipeline[0] = '\0';
+  for (size_t i = 0; i < count; i++) {
+    char stage[512];
+    if (selections[i].field == 3) {
+      snprintf(stage, sizeof(stage), "MARK %c %s", selections[i].op,
+               selections[i].value);
+    } else {
+      snprintf(stage, sizeof(stage), "GREP %s = \"%s\"",
+               adv_query_field_token(selections[i].field), selections[i].value);
+    }
+    if (pipeline[0] != '\0') {
+      strncat(pipeline, " | ", size - strlen(pipeline) - 1);
+    }
+    strncat(pipeline, stage, size - strlen(pipeline) - 1);
+  }
+}
+
+// guided prompt entry point used by CMS/test harness to build and run a
+// pipeline
+AdvQueryStatus adv_query_run_prompt(StudentDatabase *db) {
+  if (!db) {
+    return ADV_QUERY_ERROR_INVALID_ARGUMENT;
+  }
+  if (!db->is_loaded || db->table_count == 0) {
+    printf("CMS: Please OPEN the database before running advanced query.\n");
+    return ADV_QUERY_ERROR_EMPTY_DATABASE;
+  }
+
+  AdvQuerySelection selections[8];
+  size_t selection_count = 0;
+  if (!adv_query_collect_fields(selections, &selection_count)) {
+    return ADV_QUERY_OK;
+  }
+
+  adv_query_collect_values(selections, selection_count);
+
+  char pipeline[256 * 8] = {0};
+  adv_query_build_pipeline(selections, selection_count, pipeline,
+                           sizeof(pipeline));
+
+  return adv_query_execute(db, pipeline);
 }
