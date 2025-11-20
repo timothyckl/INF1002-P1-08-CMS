@@ -1,5 +1,6 @@
 #include "database.h"
 #include "parser.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -229,6 +230,68 @@ DBStatus db_load(StudentDatabase *db, const char *filename) {
     return DB_ERROR_NULL_POINTER;
   }
   return parse_file(filename, db);
+}
+
+/*
+ * save database to file
+ * writes database metadata, table structure, and all records to file
+ * returns: DB_SUCCESS on success, error code on failure
+ */
+DBStatus db_save(StudentDatabase *db, const char *filename) {
+  // validate parameters
+  if (!db || !filename) {
+    return DB_ERROR_NULL_POINTER;
+  }
+
+  // validate database has tables
+  if (db->table_count == 0) {
+    return DB_ERROR_INVALID_DATA;
+  }
+
+  // access the first table (by convention, StudentRecords table)
+  StudentTable *table = db->tables[0];
+  if (!table) {
+    return DB_ERROR_NULL_POINTER;
+  }
+
+  // validate table has column headers
+  if (!table->column_headers || table->column_count == 0) {
+    return DB_ERROR_INVALID_DATA;
+  }
+
+  // open file for writing
+  FILE *fp = fopen(filename, "w");
+  if (!fp) {
+    return DB_ERROR_FILE_NOT_FOUND;
+  }
+
+  // write header metadata
+  fprintf(fp, "Database Name: %s\n", db->db_name);
+  fprintf(fp, "Authors: %s\n", db->authors);
+  fprintf(fp, "\n");
+  fprintf(fp, "Table Name: %s\n", table->table_name);
+
+  // write column headers (ID, Name, Programme, Mark)
+  for (size_t i = 0; i < table->column_count; i++) {
+    fprintf(fp, "%s", table->column_headers[i]);
+    if (i + 1 < table->column_count) {
+      fputc('\t', fp);
+    }
+  }
+  fputc('\n', fp);
+
+  // write all records
+  for (size_t i = 0; i < table->record_count; i++) {
+    const StudentRecord *r = &table->records[i];
+    fprintf(fp, "%d\t%s\t%s\t%.2f\n", r->id, r->name, r->prog, r->mark);
+  }
+
+  // close file
+  if (fclose(fp) != 0) {
+    return DB_ERROR_FILE_READ;
+  }
+
+  return DB_SUCCESS;
 }
 
 /*

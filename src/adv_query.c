@@ -105,17 +105,15 @@ static size_t collect_records(StudentDatabase *db, StudentRecord ***out) {
   return total;
 }
 
-static int contains_case_insensitive(const char *haystack,
-                                     const char *needle) {
+static int contains_case_insensitive(const char *haystack, const char *needle) {
   if (!haystack || !needle || *needle == '\0') {
     return 0;
   }
   size_t needle_len = strlen(needle);
   for (const char *cursor = haystack; *cursor; cursor++) {
     size_t i = 0;
-    while (cursor[i] &&
-           tolower((unsigned char)cursor[i]) ==
-               tolower((unsigned char)needle[i])) {
+    while (cursor[i] && tolower((unsigned char)cursor[i]) ==
+                            tolower((unsigned char)needle[i])) {
       i++;
       if (i == needle_len) {
         return 1;
@@ -357,4 +355,3 @@ const char *adv_query_status_string(AdvQueryStatus status) {
     return "unknown advanced query error";
   }
 }
-
