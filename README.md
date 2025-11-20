@@ -23,13 +23,25 @@ make
 See [Support Guide](SUPPORT.md) to setup Make.exe in windows enviroment.
 
 or manually:
+
+(Windows users using GCC)
 ```bash
-gcc -Iinclude src\*.c -o main.exe
+mkdir -p build
+gcc -Iinclude src\*.c -o build\main.exe
+```
+(MacOS users using Clang.)
+```bash
+mkdir -p build
+clang -Iinclude src/*.c -o build/main.exe
 ```
 
 ### Run
 ```bash
-.\main.exe data\P1_8-CMS.txt
+# Windows
+.\build\main.exe data\P1_8-CMS.txt
+
+# macOS/Linux
+./build/main.exe data/P1_8-CMS.txt
 ```
 
 ## 🧪 Testing

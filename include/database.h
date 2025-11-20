@@ -76,8 +76,9 @@ StudentDatabase *db_init(void);
 void db_free(StudentDatabase *db);
 DBStatus db_add_table(StudentDatabase *db, StudentTable *table);
 
-// file loading (calls parser internally)
+// file operations
 DBStatus db_load(StudentDatabase *db, const char *filename);
+DBStatus db_save(StudentDatabase *db, const char *filename);
 
 // helper to convert status to string (for error messages)
 const char *db_status_string(DBStatus status);
