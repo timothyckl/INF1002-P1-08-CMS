@@ -7,6 +7,12 @@
 
 OpStatus execute_open(StudentDatabase *db) {
   if (db->is_loaded) {
+    // warn about unsaved changes before reload
+    if (db->has_unsaved_changes) {
+      printf("\nWarning: You have unsaved changes that will be lost if you "
+             "reload!\n");
+    }
+
     char confirm[10];
     printf("A database is already opened. Do you want to reload? (Y/N): ");
     fflush(stdout);
@@ -75,6 +81,8 @@ OpStatus execute_open(StudentDatabase *db) {
   db->filepath[sizeof db->filepath - 1] = '\0';
 
   db->is_loaded = true;
+  // clear unsaved changes flag after loading fresh data
+  db->has_unsaved_changes = false;
 
   // display summary of loaded records
   printf("\n");

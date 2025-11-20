@@ -61,7 +61,7 @@ static OpStatus get_user_input(char *buf, size_t buf_size, Operation *op) {
   return OP_SUCCESS;
 }
 
-CMSStatus main_loop(void) {
+CMSStatus run_cms_session(void) {
   CMSStatus status;
 
   status = cms_init();
@@ -81,7 +81,8 @@ CMSStatus main_loop(void) {
   Operation op;
   OpStatus op_status;
 
-  // main loop
+  // main loop - continue until user successfully exits
+  // (exit can be cancelled if there are unsaved changes)
   do {
     status = display_menu();
     if (status != CMS_SUCCESS) {
@@ -95,7 +96,7 @@ CMSStatus main_loop(void) {
     }
 
     op_status = execute_operation(op, db);
-  } while (op != EXIT);
+  } while (op != EXIT || op_status != OP_SUCCESS);
 
   db_free(db);
   return CMS_SUCCESS;

@@ -23,8 +23,8 @@ CMSStatus cms_init(void);
 // displays the main menu options to the user
 CMSStatus display_menu(void);
 
-// runs the main interactive loop, processing user commands
-CMSStatus main_loop(void);
+// runs the cms session, processing user commands
+CMSStatus run_cms_session(void);
 
 // converts cms status code to readable string
 const char *cms_status_string(CMSStatus status);

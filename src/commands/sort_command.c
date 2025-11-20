@@ -115,6 +115,9 @@ OpStatus execute_sort(StudentDatabase *db) {
          table->record_count, (table->record_count == 1) ? "" : "s", field_name,
          order_name);
 
+  // mark database as having unsaved changes
+  db->has_unsaved_changes = true;
+
   cmd_wait_for_user();
 
   return OP_SUCCESS;

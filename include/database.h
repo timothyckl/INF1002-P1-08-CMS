@@ -74,6 +74,9 @@ typedef struct {
   // where the database was loaded from (for saving)
   char filepath[MAX_FILE_PATH];
 
+  // tracks if database has unsaved changes
+  bool has_unsaved_changes;
+
   // session event log for tracking operations
   // pointer to event log (NULL until first event or until initialised)
   EventLog *event_log;

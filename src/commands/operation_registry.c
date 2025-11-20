@@ -1,6 +1,7 @@
 #include "commands/command.h"
 #include "event_log.h"
 #include <stdio.h>
+#include <string.h>
 
 // operation entry mapping operation type to execution function
 typedef struct {
@@ -41,6 +42,59 @@ static bool should_log_operation(Operation op) {
 OpStatus execute_operation(Operation op, StudentDatabase *db) {
   // handle EXIT operation specially
   if (op == EXIT) {
+    // check for unsaved changes before exiting
+    if (db && db->has_unsaved_changes) {
+      printf("\nWarning: You have unsaved changes!\n");
+      printf("What would you like to do?\n");
+      printf("  [1] Save and exit\n");
+      printf("  [2] Discard and exit\n");
+      printf("  [3] Cancel (return to menu)\n");
+      printf("Enter your choice: ");
+      fflush(stdout);
+
+      char choice_buf[10];
+      if (!fgets(choice_buf, sizeof choice_buf, stdin)) {
+        printf("CMS: Failed to read input. Returning to menu.\n");
+        return OP_ERROR_INPUT;
+      }
+
+      // strip trailing newline/carriage return
+      size_t len = strcspn(choice_buf, "\r\n");
+      choice_buf[len] = '\0';
+
+      // handle user choice
+      if (len == 1 && choice_buf[0] == '1') {
+        // save and exit
+        if (db->filepath[0] != '\0') {
+          DBStatus db_status = db_save(db, db->filepath);
+          if (db_status == DB_SUCCESS) {
+            printf("CMS: Database saved successfully.\n");
+            db->has_unsaved_changes = false;
+          } else {
+            printf("CMS: Failed to save database: %s\n",
+                   db_status_string(db_status));
+            printf("CMS: Exit cancelled. Returning to menu.\n");
+            return OP_ERROR_GENERAL;
+          }
+        } else {
+          printf("CMS: No file path available for saving.\n");
+          printf("CMS: Exit cancelled. Returning to menu.\n");
+          return OP_ERROR_GENERAL;
+        }
+      } else if (len == 1 && choice_buf[0] == '2') {
+        // discard and exit - just continue to print goodbye
+        printf("CMS: Changes discarded.\n");
+      } else if (len == 1 && choice_buf[0] == '3') {
+        // cancel exit
+        printf("CMS: Exit cancelled. Returning to menu.\n");
+        return OP_ERROR_GENERAL;
+      } else {
+        // invalid choice - cancel exit
+        printf("CMS: Invalid choice. Exit cancelled. Returning to menu.\n");
+        return OP_ERROR_VALIDATION;
+      }
+    }
+
     printf("Goodbye!\n");
     return OP_SUCCESS;
   }

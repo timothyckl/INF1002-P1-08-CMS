@@ -120,6 +120,10 @@ OpStatus execute_delete(StudentDatabase *db) {
   }
 
   printf("CMS: The record with ID=%d is successfully deleted.\n", student_id);
+
+  // mark database as having unsaved changes
+  db->has_unsaved_changes = true;
+
   cmd_wait_for_user();
 
   return OP_SUCCESS;

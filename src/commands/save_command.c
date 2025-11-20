@@ -26,6 +26,10 @@ OpStatus execute_save(StudentDatabase *db) {
 
   printf("CMS: The database file \"%s\" is successfully saved.\n",
          db->filepath);
+
+  // clear unsaved changes flag after successful save
+  db->has_unsaved_changes = false;
+
   cmd_wait_for_user();
 
   return OP_SUCCESS;

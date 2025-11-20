@@ -157,6 +157,7 @@ StudentDatabase *db_init(void) {
   db->table_capacity = INITIAL_TABLE_CAPACITY;
   db->is_loaded = false;
   db->filepath[0] = '\0';
+  db->has_unsaved_changes = false;
   db->event_log = NULL;
 
   return db;
