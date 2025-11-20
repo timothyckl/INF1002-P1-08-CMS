@@ -5,7 +5,9 @@
  * Tests the search logic for finding student records by ID.
  *
  * Build command:
- *   clang -Iinclude -Wall -Wextra -g src/{adv_query,cms,database,parser,sorting,utils}.c tests/test_query.c -o build/test_query.exe
+ *   clang -Iinclude -Wall -Wextra -g
+ * src/{adv_query,cms,database,parser,sorting,utils}.c tests/test_query.c -o
+ * build/test_query.exe
  *
  * Run command:
  *   ./build/test_query.exe

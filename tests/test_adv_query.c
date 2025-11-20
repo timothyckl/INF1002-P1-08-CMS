@@ -5,7 +5,9 @@
  * Tests the pipeline-based search system with GREP and MARK filters.
  *
  * Build command:
- *   clang -Iinclude -Wall -Wextra -g src/{adv_query,cms,database,parser,sorting,utils}.c tests/test_adv_query.c -o build/test_adv_query.exe
+ *   clang -Iinclude -Wall -Wextra -g
+ * src/{adv_query,cms,database,parser,sorting,utils}.c tests/test_adv_query.c -o
+ * build/test_adv_query.exe
  *
  * Run command:
  *   ./build/test_adv_query.exe
@@ -50,8 +52,7 @@ int main(void) {
   print_case_result("NULL pipeline", adv_query_execute(db, NULL),
                     ADV_QUERY_ERROR_INVALID_ARGUMENT);
 
-  print_case_result("Empty DB",
-                    adv_query_execute(db, "GREP NAME = test"),
+  print_case_result("Empty DB", adv_query_execute(db, "GREP NAME = test"),
                     ADV_QUERY_ERROR_EMPTY_DATABASE);
 
   DBStatus load_status = db_load(db, "data/P1_8-CMS.txt", NULL);
@@ -62,23 +63,20 @@ int main(void) {
     return EXIT_FAILURE;
   }
 
-  print_case_result("Empty pipeline",
-                    run_pipeline("Empty pipeline", db, ""),
+  print_case_result("Empty pipeline", run_pipeline("Empty pipeline", db, ""),
                     ADV_QUERY_ERROR_PARSE);
   print_case_result("Unknown command",
                     run_pipeline("Unknown", db, "HELLO NAME = x"),
                     ADV_QUERY_ERROR_PARSE);
   print_case_result("Duplicate mark",
-                    run_pipeline("Mark duplicate", db,
-                                  "MARK > 50 | MARK < 60"),
+                    run_pipeline("Mark duplicate", db, "MARK > 50 | MARK < 60"),
                     ADV_QUERY_ERROR_PARSE);
-  print_case_result("Duplicate name",
-                    run_pipeline("Name twice", db,
-                                  "GREP NAME = Jo | GREP NAME = an"),
-                    ADV_QUERY_ERROR_PARSE);
+  print_case_result(
+      "Duplicate name",
+      run_pipeline("Name twice", db, "GREP NAME = Jo | GREP NAME = an"),
+      ADV_QUERY_ERROR_PARSE);
   print_case_result("Disallowed ID field",
-                    run_pipeline("GREP ID attempt", db,
-                                  "GREP ID = 230"),
+                    run_pipeline("GREP ID attempt", db, "GREP ID = 230"),
                     ADV_QUERY_ERROR_PARSE);
   print_case_result("Invalid mark op",
                     run_pipeline("Bad mark", db, "MARK != 55"),
@@ -87,16 +85,15 @@ int main(void) {
   print_case_result("Valid GREP",
                     run_pipeline("Valid GREP", db, "GREP NAME = Jo"),
                     ADV_QUERY_SUCCESS);
-  print_case_result("Valid Programme",
-                    run_pipeline("Valid programme", db,
-                                  "GREP PROGRAMME = Software"),
-                    ADV_QUERY_SUCCESS);
-  print_case_result("Valid MARK",
-                    run_pipeline("Valid MARK", db, "MARK > 60"),
+  print_case_result(
+      "Valid Programme",
+      run_pipeline("Valid programme", db, "GREP PROGRAMME = Software"),
+      ADV_QUERY_SUCCESS);
+  print_case_result("Valid MARK", run_pipeline("Valid MARK", db, "MARK > 60"),
                     ADV_QUERY_SUCCESS);
   print_case_result("Combined",
                     run_pipeline("Programme + Mark", db,
-                                  "GREP PROGRAMME = Software | MARK > 60"),
+                                 "GREP PROGRAMME = Software | MARK > 60"),
                     ADV_QUERY_SUCCESS);
 
   db_free(db);

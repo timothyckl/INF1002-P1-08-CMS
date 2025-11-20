@@ -302,20 +302,7 @@ Tests Run: 51 | Passed: 51 | Failed: 0
 ═══════════════════════════════════════════════════════════
 ```
 
-## Coverage Goals
-
-| Module | Target | Current |
-|--------|--------|---------|
-| Parser | 90% | ~90% |
-| Database | 95% | ~85% |
-| Sorting | 90% | ~95% |
-| Statistics | 85% | ~90% |
-| Event Log | 75% | ~85% |
-| Commands | 85% | ~40%* |
-
-\* Command tests limited by stdin mocking requirements
-
-## Known Limitations
+## Limitations
 
 ### Command Testing
 Full command testing requires:
@@ -328,30 +315,6 @@ Current tests cover:
 - Error handling
 - Success cases without user input
 
-### Platform-Specific
-- Terminal colours may not work on Windows
-- Valgrind not available on macOS ARM (use Docker or Linux)
-
-## Continuous Integration
-
-### Recommended Workflow
-```yaml
-# .github/workflows/tests.yml
-name: Tests
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build
-        run: make tests
-      - name: Run Tests
-        run: make test
-      - name: Memory Check
-        run: make test-memory
-```
-
 ## Troubleshooting
 
 ### Test Compilation Fails
@@ -360,41 +323,3 @@ jobs:
 make clean
 make tests
 ```
-
-### Valgrind Not Found
-```bash
-# Install valgrind (Ubuntu/Debian)
-sudo apt-get install valgrind
-
-# Install valgrind (macOS - Intel only)
-brew install valgrind
-```
-
-### Test Fixture Not Found
-```bash
-# Ensure fixtures directory exists
-mkdir -p tests/fixtures
-# Regenerate fixtures if needed
-```
-
-## Future Enhancements
-
-1. **stdin mocking** - Complete command testing
-2. **Coverage reports** - gcov/lcov integration
-3. **Performance benchmarks** - Track regression
-4. **Fuzzing** - Automated edge case discovery
-5. **CI/CD integration** - Automated testing on commits
-
-## Contributing
-
-When adding new features:
-1. Write tests first (TDD approach)
-2. Ensure all tests pass before committing
-3. Run memory check to verify no leaks
-4. Update this README if adding new test files
-
----
-
-**Last Updated:** 2025-01-21
-**Test Count:** ~200 tests
-**Coverage:** ~80% overall

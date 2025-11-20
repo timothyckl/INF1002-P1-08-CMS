@@ -6,7 +6,9 @@
  * functionality with user input.
  *
  * Build command:
- *   clang -Iinclude -Wall -Wextra -g \src/{adv_query,cms,database,parser,sorting,utils}.c \tests/example_menu_adv_query.c \-o build/example_menu_adv_query.exe
+ *   clang -Iinclude -Wall -Wextra -g
+ * \src/{adv_query,cms,database,parser,sorting,utils}.c
+ * \tests/example_menu_adv_query.c \-o build/example_menu_adv_query.exe
  *
  * Run command:
  *   ./build/example_menu_adv_query.exe
@@ -139,8 +141,7 @@ static void run_adv_query(StudentDatabase *db) {
   // guided prompt that builds and executes the pipeline for the user
   AdvQueryStatus status = adv_query_run_prompt(db);
   if (status != ADV_QUERY_SUCCESS) {
-    printf("CMS: Advanced query failed: %s\n",
-           adv_query_status_string(status));
+    printf("CMS: Advanced query failed: %s\n", adv_query_status_string(status));
   }
 
   wait_for_enter();
@@ -175,14 +176,12 @@ int main(void) {
       }
       DBStatus status = db_load(db, path, NULL);
       if (status != DB_SUCCESS) {
-        printf("CMS: Failed to load database: %s\n",
-               db_status_string(status));
+        printf("CMS: Failed to load database: %s\n", db_status_string(status));
       } else {
         db->is_loaded = true;
         strncpy(db->filepath, path, sizeof db->filepath);
         db->filepath[sizeof db->filepath - 1] = '\0';
-        printf("CMS: The database file \"%s\" is successfully opened.\n",
-               path);
+        printf("CMS: The database file \"%s\" is successfully opened.\n", path);
       }
       wait_for_enter();
       break;
