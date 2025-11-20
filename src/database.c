@@ -294,6 +294,67 @@ DBStatus db_save(StudentDatabase *db, const char *filename) {
   return DB_SUCCESS;
 }
 
+DBStatus db_update_record(
+    StudentDatabase *db,
+    int id,
+    const char *new_name,
+    const char *new_prog,
+    const float *new_mark)
+{
+    if (!db) {
+        return DB_ERROR_NULL_POINTER;
+    }
+
+    // All records are stored in the first table (StudentRecords)
+    if (db->table_count == 0) {
+        return DB_ERROR_INVALID_DATA;
+    }
+
+    StudentTable *table = db->tables[0];
+    if (!table) {
+        return DB_ERROR_NULL_POINTER;
+    }
+
+    // Find the record
+    StudentRecord *rec = NULL;
+    for (size_t i = 0; i < table->record_count; i++) {
+        if (table->records[i].id == id) {
+            rec = &table->records[i];
+            break;
+        }
+    }
+
+    if (!rec) {
+        return DB_ERROR_NOT_FOUND;
+    }
+
+    // Prepare copy for validation
+    StudentRecord updated = *rec;
+
+    if (new_name) {
+        strncpy(updated.name, new_name, sizeof(updated.name) - 1);
+        updated.name[sizeof(updated.name) - 1] = '\0';
+    }
+
+    if (new_prog) {
+        strncpy(updated.prog, new_prog, sizeof(updated.prog) - 1);
+        updated.prog[sizeof(updated.prog) - 1] = '\0';
+    }
+
+    if (new_mark) {
+        updated.mark = *new_mark;
+    }
+
+    // No built-in validate_record() in current code — 
+    // parser already validated during load.
+    // So the CMS input validation will handle bad values.
+
+    // Commit update
+    *rec = updated;
+
+    return DB_SUCCESS;
+}
+
 /*
  * convert status code to human-readable string
  * returns: string description of status

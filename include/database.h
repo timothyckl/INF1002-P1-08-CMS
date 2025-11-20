@@ -83,4 +83,13 @@ DBStatus db_save(StudentDatabase *db, const char *filename);
 // helper to convert status to string (for error messages)
 const char *db_status_string(DBStatus status);
 
+// Update a student record by ID. Only non-NULL fields will be updated.
+DBStatus db_update_record(
+    StudentDatabase *db,
+    int id,
+    const char *new_name,
+    const char *new_prog,
+    const float *new_mark);
+
+
 #endif
