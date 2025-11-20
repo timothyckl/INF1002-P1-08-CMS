@@ -138,7 +138,7 @@ static void run_adv_query(StudentDatabase *db) {
 
   // guided prompt that builds and executes the pipeline for the user
   AdvQueryStatus status = adv_query_run_prompt(db);
-  if (status != ADV_QUERY_OK) {
+  if (status != ADV_QUERY_SUCCESS) {
     printf("CMS: Advanced query failed: %s\n",
            adv_query_status_string(status));
   }

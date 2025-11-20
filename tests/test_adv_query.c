@@ -86,18 +86,18 @@ int main(void) {
 
   print_case_result("Valid GREP",
                     run_pipeline("Valid GREP", db, "GREP NAME = Jo"),
-                    ADV_QUERY_OK);
+                    ADV_QUERY_SUCCESS);
   print_case_result("Valid Programme",
                     run_pipeline("Valid programme", db,
                                   "GREP PROGRAMME = Software"),
-                    ADV_QUERY_OK);
+                    ADV_QUERY_SUCCESS);
   print_case_result("Valid MARK",
                     run_pipeline("Valid MARK", db, "MARK > 60"),
-                    ADV_QUERY_OK);
+                    ADV_QUERY_SUCCESS);
   print_case_result("Combined",
                     run_pipeline("Programme + Mark", db,
                                   "GREP PROGRAMME = Software | MARK > 60"),
-                    ADV_QUERY_OK);
+                    ADV_QUERY_SUCCESS);
 
   db_free(db);
   return EXIT_SUCCESS;
