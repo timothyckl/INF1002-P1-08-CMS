@@ -212,11 +212,11 @@ DBStatus db_add_table(StudentDatabase *db, StudentTable *table) {
  * load database from file
  * returns: DB_SUCCESS on success, error code on failure
  */
-DBStatus db_load(StudentDatabase *db, const char *filename) {
+DBStatus db_load(StudentDatabase *db, const char *filename, void *stats) {
   if (!db || !filename) {
     return DB_ERROR_NULL_POINTER;
   }
-  return parse_file(filename, db);
+  return parse_file(filename, db, (ParseStatistics *)stats);
 }
 
 /*
@@ -317,9 +317,11 @@ DBStatus db_update_record(StudentDatabase *db, int id, const char *new_name,
     updated.mark = *new_mark;
   }
 
-  // No built-in validate_record() in current code —
-  // parser already validated during load.
-  // So the CMS input validation will handle bad values.
+  // validate the updated record before applying changes
+  ValidationStatus val_status = validate_record(&updated);
+  if (val_status != VALID_RECORD) {
+    return DB_ERROR_INVALID_DATA;
+  }
 
   *rec = updated;
 

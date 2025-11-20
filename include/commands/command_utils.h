@@ -18,4 +18,10 @@ void cmd_wait_for_user(void);
  */
 OpStatus cmd_report_error(const char *error_msg, OpStatus status);
 
+/**
+ * validates that a string contains only alphabetic characters and spaces
+ * returns: 1 if valid, 0 if invalid
+ */
+int cmd_is_alphabetic(const char *str);
+
 #endif // COMMAND_UTILS_H

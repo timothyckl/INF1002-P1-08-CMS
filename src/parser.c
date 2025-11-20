@@ -237,14 +237,24 @@ ParseStatus parse_column_headers(const char *line, char ***headers,
  * parse entire file into database with state machine
  * returns: DB_SUCCESS on success, error code on failure
  */
-DBStatus parse_file(const char *filename, StudentDatabase *db) {
+DBStatus parse_file(const char *filename, StudentDatabase *db,
+                    ParseStatistics *stats) {
   if (!filename || !db) {
     return DB_ERROR_NULL_POINTER;
   }
 
+  // initialise statistics if provided
+  if (stats) {
+    stats->total_records_attempted = 0;
+    stats->records_loaded = 0;
+    stats->records_skipped = 0;
+    stats->validation_errors = 0;
+    stats->parse_errors = 0;
+  }
+
   FILE *fp = fopen(filename, "r");
   if (!fp) {
-    fprintf(stderr, "Error: Cannot open file %s\n", filename);
+    printf("CMS: Error - Cannot open file '%s'\n", filename);
     return DB_ERROR_FILE_NOT_FOUND;
   }
 
@@ -304,8 +314,8 @@ DBStatus parse_file(const char *filename, StudentDatabase *db) {
         table_set_column_headers(current_table, headers, count);
         awaiting_headers = 0; // now we can parse records
       } else {
-        fprintf(stderr, "Warning: Failed to parse column headers at line %d\n",
-                line_num);
+        printf("CMS: Warning - Failed to parse column headers at line %d\n",
+               line_num);
         awaiting_headers = 0; // skip to records anyway
       }
     } else if (current_table && !awaiting_headers) {
@@ -314,6 +324,10 @@ DBStatus parse_file(const char *filename, StudentDatabase *db) {
       ParseStatus parse_status = parse_record_line(line, &record);
 
       if (parse_status == PARSE_SUCCESS) {
+        if (stats) {
+          stats->total_records_attempted++;
+        }
+
         ValidationStatus validation = validate_record(&record);
 
         if (validation == VALID_RECORD) {
@@ -322,13 +336,25 @@ DBStatus parse_file(const char *filename, StudentDatabase *db) {
             fclose(fp);
             return add_status;
           }
+          if (stats) {
+            stats->records_loaded++;
+          }
         } else {
-          fprintf(stderr, "Warning: %s at line %d\n",
-                  validation_error_string(validation), line_num);
+          printf("CMS: Warning - %s at line %d\n",
+                 validation_error_string(validation), line_num);
+          if (stats) {
+            stats->records_skipped++;
+            stats->validation_errors++;
+          }
         }
       } else if (parse_status != PARSE_ERROR_EMPTY) {
-        fprintf(stderr, "Warning: %s at line %d\n",
-                parse_status_string(parse_status), line_num);
+        if (stats) {
+          stats->total_records_attempted++;
+          stats->records_skipped++;
+          stats->parse_errors++;
+        }
+        printf("CMS: Warning - %s at line %d\n",
+               parse_status_string(parse_status), line_num);
       }
     }
   }

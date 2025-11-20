@@ -85,6 +85,12 @@ OpStatus execute_insert(StudentDatabase *db) {
                             OP_ERROR_VALIDATION);
   }
 
+  if (!cmd_is_alphabetic(name_buf)) {
+    return cmd_report_error(
+        "Student name must contain only alphabetic characters and spaces.",
+        OP_ERROR_VALIDATION);
+  }
+
   char prog_buf[256];
   printf("Enter programme: ");
   fflush(stdout);
@@ -103,6 +109,12 @@ OpStatus execute_insert(StudentDatabase *db) {
   if (prog_len >= 50) {
     return cmd_report_error("Programme name is too long (max 49 characters).",
                             OP_ERROR_VALIDATION);
+  }
+
+  if (!cmd_is_alphabetic(prog_buf)) {
+    return cmd_report_error(
+        "Programme must contain only alphabetic characters and spaces.",
+        OP_ERROR_VALIDATION);
   }
 
   char mark_buf[256];

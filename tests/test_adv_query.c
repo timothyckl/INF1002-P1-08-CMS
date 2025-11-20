@@ -54,7 +54,7 @@ int main(void) {
                     adv_query_execute(db, "GREP NAME = test"),
                     ADV_QUERY_ERROR_EMPTY_DATABASE);
 
-  DBStatus load_status = db_load(db, "data/P1_8-CMS.txt");
+  DBStatus load_status = db_load(db, "data/P1_8-CMS.txt", NULL);
   if (load_status != DB_SUCCESS) {
     fprintf(stderr, "Failed to load database: %s\n",
             db_status_string(load_status));

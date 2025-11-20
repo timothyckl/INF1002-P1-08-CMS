@@ -13,7 +13,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-// forward declaration to avoid circular dependency
+// forward declarations to avoid circular dependency
 typedef struct EventLog EventLog;
 
 // capacity constants
@@ -108,7 +108,8 @@ DBStatus db_add_table(StudentDatabase *db, StudentTable *table);
 
 // file operations
 // loads database from a text file
-DBStatus db_load(StudentDatabase *db, const char *filename);
+// if stats is provided, it will be populated with parsing statistics (from parser.h)
+DBStatus db_load(StudentDatabase *db, const char *filename, void *stats);
 
 // saves database to a text file
 DBStatus db_save(StudentDatabase *db, const char *filename);

@@ -173,7 +173,7 @@ int main(void) {
         wait_for_enter();
         break;
       }
-      DBStatus status = db_load(db, path);
+      DBStatus status = db_load(db, path, NULL);
       if (status != DB_SUCCESS) {
         printf("CMS: Failed to load database: %s\n",
                db_status_string(status));

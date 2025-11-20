@@ -86,7 +86,7 @@ int main(void) {
     return EXIT_FAILURE;
   }
 
-  DBStatus status = db_load(db, "data/P1_8-CMS.txt");
+  DBStatus status = db_load(db, "data/P1_8-CMS.txt", NULL);
   if (status != DB_SUCCESS) {
     fprintf(stderr, "Failed to load database: %s\n", db_status_string(status));
     db_free(db);

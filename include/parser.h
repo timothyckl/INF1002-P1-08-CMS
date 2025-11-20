@@ -27,8 +27,19 @@ typedef enum {
   PARSE_ERROR_INCOMPLETE // line missing required fields
 } ParseStatus;
 
+// parsing statistics for tracking warnings during file load
+typedef struct {
+  int total_records_attempted; // total data lines processed
+  int records_loaded;          // successfully loaded records
+  int records_skipped;         // records skipped due to errors
+  int validation_errors;       // count of validation errors
+  int parse_errors;            // count of parse format errors
+} ParseStatistics;
+
 // parse entire file into database
-DBStatus parse_file(const char *filename, StudentDatabase *db);
+// if stats is provided, it will be populated with parsing statistics
+DBStatus parse_file(const char *filename, StudentDatabase *db,
+                    ParseStatistics *stats);
 
 // parse single metadata line
 ParseStatus parse_metadata(const char *line, char *key, char *value);

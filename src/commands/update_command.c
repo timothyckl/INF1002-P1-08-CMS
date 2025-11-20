@@ -121,6 +121,11 @@ OpStatus execute_update(StudentDatabase *db) {
     if (nlen == 0) {
       return cmd_report_error("Name cannot be empty.", OP_ERROR_VALIDATION);
     }
+    if (!cmd_is_alphabetic(buffer)) {
+      return cmd_report_error(
+          "Name must contain only alphabetic characters and spaces.",
+          OP_ERROR_VALIDATION);
+    }
     new_name = buffer;
 
   } else if (choice == 2) {
@@ -134,6 +139,11 @@ OpStatus execute_update(StudentDatabase *db) {
     if (plen == 0) {
       return cmd_report_error("Programme cannot be empty.",
                               OP_ERROR_VALIDATION);
+    }
+    if (!cmd_is_alphabetic(buffer)) {
+      return cmd_report_error(
+          "Programme must contain only alphabetic characters and spaces.",
+          OP_ERROR_VALIDATION);
     }
     new_prog = buffer;
 

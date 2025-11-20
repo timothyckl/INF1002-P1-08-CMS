@@ -1,5 +1,6 @@
 #include "commands/command.h"
 #include "commands/command_utils.h"
+#include "parser.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -57,7 +58,8 @@ OpStatus execute_open(StudentDatabase *db) {
     }
   }
 
-  DBStatus status = db_load(db, path);
+  ParseStatistics stats;
+  DBStatus status = db_load(db, path, &stats);
   if (status != DB_SUCCESS) {
     printf("CMS: Failed to load database: %s\n", db_status_string(status));
 
@@ -73,7 +75,23 @@ OpStatus execute_open(StudentDatabase *db) {
   db->filepath[sizeof db->filepath - 1] = '\0';
 
   db->is_loaded = true;
+
+  // display summary of loaded records
+  printf("\n");
   printf("CMS: The database file \"%s\" is successfully opened.\n", path);
+
+  if (stats.total_records_attempted > 0) {
+    printf("CMS: Summary - %d record(s) loaded, %d record(s) skipped.\n",
+           stats.records_loaded, stats.records_skipped);
+
+    if (stats.records_skipped > 0) {
+      printf("CMS: Details - %d validation error(s), %d parse error(s).\n",
+             stats.validation_errors, stats.parse_errors);
+      printf(
+          "CMS: Note - Invalid records were skipped and not added to the "
+          "database.\n");
+    }
+  }
 
   cmd_wait_for_user();
 
