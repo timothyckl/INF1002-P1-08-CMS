@@ -1,11 +1,7 @@
 # INF1002-P1-08-C
 
-This repository contains our group's project for the Programming Fundamentals module.
-The project is implemented in C and focuses on applying key programming concepts such as control flow, data structures, and modular design.
-
-## Overview
-
-A terminal-based Class Management System for managing student records. The system provides core CRUD operations: OPEN, SHOW, INSERT, QUERY, UPDATE, DELETE, and SAVE.
+A terminal-based Class Management System for managing student records. \
+The system provides core CRUD operations: `OPEN`, `SHOW`, `INSERT`, `QUERY`, `UPDATE`, `DELETE`, and `SAVE`.
 
 ## Getting Started
 
