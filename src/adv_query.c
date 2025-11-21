@@ -16,6 +16,9 @@ typedef enum {
   QUERY_FIELD_INVALID
 } QueryField;
 
+#define ADV_QUERY_FIELD_COUNT 3
+#define ADV_QUERY_MAX_SELECTIONS 8
+
 // duplicate string to heap; caller frees
 static char *dup_string(const char *src) {
   if (!src) {
@@ -556,7 +559,11 @@ static int adv_query_field_used(const AdvQuerySelection *selections,
 static int adv_query_collect_fields(AdvQuerySelection *selections,
                                     size_t *selection_count) {
   size_t count = 0;
-  while (count < 8) {
+  while (count < ADV_QUERY_MAX_SELECTIONS) {
+    if (count >= ADV_QUERY_FIELD_COUNT) {
+      printf("All available fields have been selected.\n");
+      break;
+    }
     int choice = adv_query_prompt_field();
     if (choice == 0) {
       if (count == 0) {
@@ -564,8 +571,7 @@ static int adv_query_collect_fields(AdvQuerySelection *selections,
         *selection_count = 0;
         return 0;
       }
-      printf("Use the Y/N prompt to finish.\n");
-      continue;
+      break; // finish collecting after at least one selection
     }
     if (adv_query_field_used(selections, count, choice)) {
       printf("You already selected %s. Pick another field.\n",
@@ -576,8 +582,13 @@ static int adv_query_collect_fields(AdvQuerySelection *selections,
     selections[count].op = '=';
     selections[count].value[0] = '\0';
     count++;
-    if (count >= 8) {
-      printf("Reached maximum number of fields (8).\n");
+    if (count >= ADV_QUERY_FIELD_COUNT) {
+      printf("All available fields have been selected.\n");
+      break;
+    }
+    if (count >= ADV_QUERY_MAX_SELECTIONS) {
+      printf("Reached maximum number of fields (%d).\n",
+             ADV_QUERY_MAX_SELECTIONS);
       break;
     }
     if (!adv_query_yes_no("Add another field? (Y/N): ")) {
@@ -633,7 +644,7 @@ AdvQueryStatus adv_query_run_prompt(StudentDatabase *db) {
     return ADV_QUERY_ERROR_EMPTY_DATABASE;
   }
 
-  AdvQuerySelection selections[8];
+  AdvQuerySelection selections[ADV_QUERY_MAX_SELECTIONS];
   size_t selection_count = 0;
   if (!adv_query_collect_fields(selections, &selection_count)) {
     return ADV_QUERY_SUCCESS;
@@ -641,7 +652,7 @@ AdvQueryStatus adv_query_run_prompt(StudentDatabase *db) {
 
   adv_query_collect_values(selections, selection_count);
 
-  char pipeline[256 * 8] = {0};
+  char pipeline[256 * ADV_QUERY_MAX_SELECTIONS] = {0};
   adv_query_build_pipeline(selections, selection_count, pipeline,
                            sizeof(pipeline));
 
