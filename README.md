@@ -1,48 +1,36 @@
 # INF1002-P1-08-C
 
-This repository contains our group’s project for the Programming Fundamentals module.
+This repository contains our group's project for the Programming Fundamentals module.
 The project is implemented in C and focuses on applying key programming concepts such as control flow, data structures, and modular design.
 
-## 🧩 Overview
-> (Update this section once the project specifications are released.) \
-> Briefly describe what the program does, its purpose, and any key features or objectives.
+## Overview
 
-## ⚙️ Getting Started
+A terminal-based Class Management System for managing student records. The system provides core CRUD operations: OPEN, SHOW, INSERT, QUERY, UPDATE, DELETE, and SAVE.
+
+## Getting Started
 
 ### Prerequisites
 - A C compiler (e.g. gcc or clang)
 - `make` installed (optional but recommended)
-- Criterion for unit tests (?)
 
 ### Build
 
-To compile the program:
+To compile the programme:
 ```bash
 make
 ```
-See [Support Guide](SUPPORT.md) to setup Make.exe in windows enviroment.
 
-or manually:
-
-(Windows users using GCC)
+Or manually:
 ```bash
 mkdir -p build
-gcc -Iinclude src\*.c -o build\main.exe
-```
-(MacOS users using Clang.)
-```bash
-mkdir -p build
-clang -Iinclude src/*.c -o build/main.exe
+gcc -Iinclude src/*.c src/commands/*.c -o build/main
 ```
 
 ### Run
 ```bash
-# Windows
-.\build\main.exe data\P1_8-CMS.txt
-
-# macOS/Linux
-./build/main.exe data/P1_8-CMS.txt
+./build/main data/P1_8-CMS.txt
 ```
 
-## 🧪 Testing
-> (Add more details here when testing setup is ready.)
+## Testing
+
+See [tests/README.md](tests/README.md) for comprehensive test documentation.
