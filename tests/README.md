@@ -8,7 +8,7 @@ The test suite provides extensive coverage of all core modules with ~200 test ca
 
 ### Test Structure
 
-```
+```bash
 tests/
 ├── test_utils.h           # Test framework utilities and assertions
 ├── test_utils.c           # Helper functions and test fixtures
