@@ -1,4 +1,4 @@
-# INF1002-P1-08-C
+# INF1002-P1-08-CMS
 
 A terminal-based Class Management System for managing student records. \
 The system provides core CRUD operations: `OPEN`, `SHOW`, `INSERT`, `QUERY`, `UPDATE`, `DELETE`, and `SAVE`.
