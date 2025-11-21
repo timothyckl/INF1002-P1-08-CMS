@@ -17,6 +17,7 @@ typedef enum {
   ADV_QUERY,
   STATISTICS,
   SHOW_LOG,
+  CHECKSUM,
 } Operation;
 
 // operation status codes for internal cms operations
@@ -48,5 +49,6 @@ OpStatus execute_sort(StudentDatabase *db);
 OpStatus execute_adv_query(StudentDatabase *db);
 OpStatus execute_statistics(StudentDatabase *db);
 OpStatus execute_show_log(StudentDatabase *db);
+OpStatus execute_checksum(StudentDatabase *db);
 
 #endif // COMMAND_H

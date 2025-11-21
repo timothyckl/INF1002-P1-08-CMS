@@ -169,9 +169,6 @@ OpStatus execute_insert(StudentDatabase *db) {
   printf("CMS: A new record with ID=%d is successfully inserted.\n",
          student_id);
 
-  // mark database as having unsaved changes
-  db->has_unsaved_changes = true;
-
   cmd_wait_for_user();
 
   return OP_SUCCESS;

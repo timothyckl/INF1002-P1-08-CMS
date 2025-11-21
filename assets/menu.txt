@@ -14,6 +14,7 @@ Main Menu
 [9] ADV QUERY: Run the advanced query pipeline.
 [10] STATISTICS: Display summary statistics for all students.
 [11] SHOW LOG: Display operation history for this session.
+[12] CHECKSUM: Verify database integrity and display checksums.
 [0] EXIT: Exit the program.
 ==============================================================
 

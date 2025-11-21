@@ -1,4 +1,5 @@
 #include "database.h"
+#include "checksum.h"
 #include "event_log.h"
 #include "parser.h"
 #include <stdio.h>
@@ -157,7 +158,8 @@ StudentDatabase *db_init(void) {
   db->table_capacity = INITIAL_TABLE_CAPACITY;
   db->is_loaded = false;
   db->filepath[0] = '\0';
-  db->has_unsaved_changes = false;
+  db->last_saved_checksum = 0;
+  db->file_loaded_checksum = 0;
   db->event_log = NULL;
 
   return db;
@@ -269,6 +271,10 @@ DBStatus db_save(StudentDatabase *db, const char *filename) {
   if (fclose(fp) != 0) {
     return DB_ERROR_FILE_READ;
   }
+
+  // update checksums after successful save
+  db->last_saved_checksum = compute_database_checksum(db);
+  db->file_loaded_checksum = compute_file_checksum(filename);
 
   return DB_SUCCESS;
 }

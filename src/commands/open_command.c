@@ -1,5 +1,6 @@
 #include "commands/command.h"
 #include "commands/command_utils.h"
+#include "checksum.h"
 #include "parser.h"
 #include <ctype.h>
 #include <stdio.h>
@@ -7,8 +8,9 @@
 
 OpStatus execute_open(StudentDatabase *db) {
   if (db->is_loaded) {
-    // warn about unsaved changes before reload
-    if (db->has_unsaved_changes) {
+    // warn about unsaved changes before reload using checksums
+    unsigned long current_checksum = compute_database_checksum(db);
+    if (current_checksum != db->last_saved_checksum) {
       printf("\nWarning: You have unsaved changes that will be lost if you "
              "reload!\n");
     }
@@ -81,8 +83,10 @@ OpStatus execute_open(StudentDatabase *db) {
   db->filepath[sizeof db->filepath - 1] = '\0';
 
   db->is_loaded = true;
-  // clear unsaved changes flag after loading fresh data
-  db->has_unsaved_changes = false;
+
+  // compute and store checksums after successful load
+  db->file_loaded_checksum = compute_file_checksum(path);
+  db->last_saved_checksum = compute_database_checksum(db);
 
   // display summary of loaded records
   printf("\n");
