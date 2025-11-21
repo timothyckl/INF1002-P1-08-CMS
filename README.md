@@ -93,7 +93,7 @@ gcc -Iinclude src/*.c src/commands/*.c -o build/main
 
 ### Run
 ```bash
-./build/main data/P1_8-CMS.txt
+./build/main
 ```
 
 ## Testing
