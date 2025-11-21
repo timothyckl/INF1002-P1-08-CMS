@@ -4,7 +4,7 @@ Comprehensive test suite for the Class Management System (CMS).
 
 ## Overview
 
-The test suite provides extensive coverage of all core modules with ~200 test cases across 6 test files.
+The test suite provides extensive coverage of all core modules with ~220 test cases across 9 test files.
 
 ### Test Structure
 
@@ -18,7 +18,9 @@ tests/
 ├── test_statistics.c      # Statistics calculation tests (12 tests)
 ├── test_event_log.c       # Event logging tests (14 tests)
 ├── test_commands.c        # Command precondition tests (30 tests)
-├── test_checksum.c        # Tests CRC32 integrity checking (29 tests)
+├── test_checksum.c        # CRC32 integrity checking tests (29 tests)
+├── test_adv_query.c       # Advanced query pipeline tests (12 tests)
+├── test_query.c           # Basic query search tests (4 tests)
 └── fixtures/              # Test data files
     ├── test_valid.txt     # Well-formed database
     ├── test_invalid.txt   # Database with invalid records
@@ -52,6 +54,9 @@ make test-memory
 ./build/test_statistics
 ./build/test_event_log
 ./build/test_commands
+./build/test_checksum
+./build/test_adv_query
+./build/test_query
 ```
 
 ## Test Coverage
@@ -203,6 +208,42 @@ make test-memory
 - Success cases (where testable without input)
 - `is_alphabetic()` validation (4 tests)
 - Operation/status name mapping (2 tests)
+
+### Checksum Module (`test_checksum.c`) - 29 tests
+
+- CRC32 calculation accuracy
+- Database checksum generation
+- File checksum verification
+- NULL pointer handling
+- Empty database handling
+- Checksum comparison and validation
+- Different database content checksums
+- File I/O error handling
+
+### Advanced Query Module (`test_adv_query.c`) - 12 tests
+
+**Pipeline-based filtering system with GREP and MARK filters**
+
+- NULL database handling
+- NULL pipeline handling
+- Empty database errors
+- Empty pipeline errors
+- Unknown command parsing
+- Duplicate filter detection (mark, name)
+- Disallowed ID field validation
+- Invalid mark operators
+- Valid GREP operations (NAME, PROGRAMME)
+- Valid MARK filters (>, <, =, >=, <=)
+- Combined pipeline filters
+
+### Query Module (`test_query.c`) - 4 tests
+
+**Basic ID-based search functionality**
+
+- NULL database pointer handling
+- Empty/unloaded database handling
+- Valid ID lookups (existing records)
+- Nonexistent ID handling
 
 ## Test Framework
 
