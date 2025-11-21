@@ -18,6 +18,7 @@ tests/
 ├── test_statistics.c      # Statistics calculation tests (12 tests)
 ├── test_event_log.c       # Event logging tests (14 tests)
 ├── test_commands.c        # Command precondition tests (30 tests)
+├── test_checksum.c        # Tests CRC32 integrity checking (29 tests)
 └── fixtures/              # Test data files
     ├── test_valid.txt     # Well-formed database
     ├── test_invalid.txt   # Database with invalid records
