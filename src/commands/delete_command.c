@@ -1,5 +1,6 @@
 #include "commands/command.h"
 #include "commands/command_utils.h"
+#include "constants.h"
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -36,7 +37,7 @@ OpStatus execute_delete(StudentDatabase *db) {
   }
 
   // prompt for student id
-  char id_buf[256];
+  char id_buf[INPUT_BUFFER_SIZE];
   printf("Enter student ID: ");
   fflush(stdout);
 
@@ -73,7 +74,7 @@ OpStatus execute_delete(StudentDatabase *db) {
   int student_id = (int)id_long;
 
   // ask user to confirm deletion
-  char confirm[10];
+  char confirm[SMALL_INPUT_SIZE];
   printf("CMS: Are you sure you want to delete record with ID=%d? Type \"Y\" "
          "to Confirm or type \"N\" to cancel.\n",
          student_id);
@@ -113,7 +114,7 @@ OpStatus execute_delete(StudentDatabase *db) {
 
   // handle other database errors
   if (db_status != DB_SUCCESS) {
-    char err_msg[256];
+    char err_msg[ERROR_MESSAGE_SIZE];
     snprintf(err_msg, sizeof err_msg, "Failed to delete record: %s",
              db_status_string(db_status));
     return cmd_report_error(err_msg, OP_ERROR_GENERAL);

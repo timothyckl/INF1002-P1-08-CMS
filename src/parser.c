@@ -1,4 +1,6 @@
 #include "parser.h"
+#include "constants.h"
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -107,9 +109,16 @@ ParseStatus parse_metadata(const char *line, char *key, char *value) {
   }
 
   // copy value and remove trailing newline
-  strcpy(value, value_start);
+  // maximum metadata value size is MAX_METADATA_VALUE (largest caller buffer)
+  strncpy(value, value_start, MAX_METADATA_VALUE - 1);
+  value[MAX_METADATA_VALUE - 1] = '\0';
   size_t value_len = strlen(value);
   if (value_len > 0 && value[value_len - 1] == '\n') {
+    value[value_len - 1] = '\0';
+  }
+  // remove trailing carriage return (windows-style line endings)
+  value_len = strlen(value);
+  if (value_len > 0 && value[value_len - 1] == '\r') {
     value[value_len - 1] = '\0';
   }
 
@@ -125,13 +134,18 @@ ParseStatus parse_record_line(const char *line, StudentRecord *record) {
     return PARSE_ERROR_FORMAT;
   }
 
-  char line_copy[256];
+  char line_copy[INPUT_BUFFER_SIZE];
   strncpy(line_copy, line, sizeof(line_copy) - 1);
   line_copy[sizeof(line_copy) - 1] = '\0';
 
   // remove trailing newline
   size_t len = strlen(line_copy);
   if (len > 0 && line_copy[len - 1] == '\n') {
+    line_copy[len - 1] = '\0';
+  }
+  // remove trailing carriage return (windows-style line endings)
+  len = strlen(line_copy);
+  if (len > 0 && line_copy[len - 1] == '\r') {
     line_copy[len - 1] = '\0';
   }
 
@@ -145,7 +159,24 @@ ParseStatus parse_record_line(const char *line, StudentRecord *record) {
   if (!token) {
     return PARSE_ERROR_INCOMPLETE;
   }
-  record->id = atoi(token);
+
+  // parse id with error checking
+  char *endptr;
+  errno = 0;
+  long id_val = strtol(token, &endptr, 10);
+
+  // check for conversion errors
+  if (errno == ERANGE || *endptr != '\0' || endptr == token) {
+    return PARSE_ERROR_FORMAT;
+  }
+
+  // check range (full validation in validate_record, but fail fast on obviously
+  // invalid values)
+  if (id_val < 0 || id_val > 9999999) {
+    return PARSE_ERROR_FORMAT;
+  }
+
+  record->id = (int)id_val;
 
   token = strtok(NULL, "\t");
   if (!token) {
@@ -165,7 +196,23 @@ ParseStatus parse_record_line(const char *line, StudentRecord *record) {
   if (!token) {
     return PARSE_ERROR_INCOMPLETE;
   }
-  record->mark = atof(token);
+
+  // parse mark with error checking
+  char *mark_endptr;
+  errno = 0;
+  float mark_val = strtof(token, &mark_endptr);
+
+  // check for conversion errors
+  if (errno == ERANGE || *mark_endptr != '\0' || mark_endptr == token) {
+    return PARSE_ERROR_FORMAT;
+  }
+
+  // basic range check (full validation in validate_record)
+  if (mark_val < 0.0f || mark_val > 100.0f) {
+    return PARSE_ERROR_FORMAT;
+  }
+
+  record->mark = mark_val;
 
   return PARSE_SUCCESS;
 }
@@ -180,13 +227,18 @@ ParseStatus parse_column_headers(const char *line, char ***headers,
     return PARSE_ERROR_FORMAT;
   }
 
-  char line_copy[512];
+  char line_copy[MAX_LINE_LENGTH];
   strncpy(line_copy, line, sizeof(line_copy) - 1);
   line_copy[sizeof(line_copy) - 1] = '\0';
 
   // remove newline
   size_t len = strlen(line_copy);
   if (len > 0 && line_copy[len - 1] == '\n') {
+    line_copy[len - 1] = '\0';
+  }
+  // remove trailing carriage return (windows-style line endings)
+  len = strlen(line_copy);
+  if (len > 0 && line_copy[len - 1] == '\r') {
     line_copy[len - 1] = '\0';
   }
 
@@ -258,7 +310,7 @@ DBStatus parse_file(const char *filename, StudentDatabase *db,
     return DB_ERROR_FILE_NOT_FOUND;
   }
 
-  char line[512];
+  char line[MAX_LINE_LENGTH];
   int line_num = 0;
   StudentTable *current_table = NULL;
   int awaiting_headers = 0; // flag: next line is column headers

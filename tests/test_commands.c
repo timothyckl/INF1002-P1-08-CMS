@@ -113,8 +113,7 @@ void test_execute_delete_empty_table(void) {
   headers[1] = strdup("Name");
   headers[2] = strdup("Programme");
   headers[3] = strdup("Mark");
-  table->column_headers = headers;
-  table->column_count = 4;
+  table_set_column_headers(table, headers, 4);
 
   db_add_table(db, table);
   db->is_loaded = true;

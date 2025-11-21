@@ -60,8 +60,7 @@ StudentDatabase *create_test_database_with_records(int count) {
     headers[1] = strdup("Name");
     headers[2] = strdup("Programme");
     headers[3] = strdup("Mark");
-    table->column_headers = headers;
-    table->column_count = 4;
+    table_set_column_headers(table, headers, 4);
   }
 
   // add test records
@@ -106,8 +105,7 @@ StudentTable *create_test_table_with_records(const char *name, int count) {
     headers[1] = strdup("Name");
     headers[2] = strdup("Programme");
     headers[3] = strdup("Mark");
-    table->column_headers = headers;
-    table->column_count = 4;
+    table_set_column_headers(table, headers, 4);
   }
 
   // add test records

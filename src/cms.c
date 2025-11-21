@@ -1,5 +1,6 @@
 #include "cms.h"
 #include "commands/command.h"
+#include "constants.h"
 #include "database.h"
 #include "ui.h"
 #include <errno.h>
@@ -16,7 +17,7 @@ CMSStatus cms_init() {
   }
 
   // wait for user and clear screen
-  char buf[256];
+  char buf[INPUT_BUFFER_SIZE];
   printf("\nPress Enter to continue...");
   (void)fgets(buf, sizeof buf, stdin);
   fflush(stdout);
@@ -77,7 +78,7 @@ CMSStatus run_cms_session(void) {
     return CMS_ERROR_DB_INIT;
   }
 
-  char inp_buf[100];
+  char inp_buf[MAX_DB_NAME_LENGTH];
   Operation op;
   OpStatus op_status;
 

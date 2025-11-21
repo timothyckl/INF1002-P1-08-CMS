@@ -1,5 +1,6 @@
 #include "commands/command.h"
 #include "commands/command_utils.h"
+#include "constants.h"
 #include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +25,7 @@ OpStatus execute_insert(StudentDatabase *db) {
     return cmd_report_error("Table error.", OP_ERROR_GENERAL);
   }
 
-  char id_buf[256];
+  char id_buf[INPUT_BUFFER_SIZE];
   printf("Enter student ID: ");
   fflush(stdout);
 
@@ -57,14 +58,14 @@ OpStatus execute_insert(StudentDatabase *db) {
 
   for (size_t i = 0; i < table->record_count; i++) {
     if (table->records[i].id == student_id) {
-      char err_msg[256];
+      char err_msg[ERROR_MESSAGE_SIZE];
       snprintf(err_msg, sizeof err_msg, "The record with ID=%d already exists.",
                student_id);
       return cmd_report_error(err_msg, OP_ERROR_VALIDATION);
     }
   }
 
-  char name_buf[256];
+  char name_buf[INPUT_BUFFER_SIZE];
   printf("Enter student name: ");
   fflush(stdout);
 
@@ -91,7 +92,7 @@ OpStatus execute_insert(StudentDatabase *db) {
         OP_ERROR_VALIDATION);
   }
 
-  char prog_buf[256];
+  char prog_buf[INPUT_BUFFER_SIZE];
   printf("Enter programme: ");
   fflush(stdout);
 
@@ -117,7 +118,7 @@ OpStatus execute_insert(StudentDatabase *db) {
         OP_ERROR_VALIDATION);
   }
 
-  char mark_buf[256];
+  char mark_buf[INPUT_BUFFER_SIZE];
   printf("Enter mark: ");
   fflush(stdout);
 
@@ -152,7 +153,7 @@ OpStatus execute_insert(StudentDatabase *db) {
   // validate record using existing validation function
   ValidationStatus val_status = validate_record(&record);
   if (val_status != VALID_RECORD) {
-    char err_msg[256];
+    char err_msg[ERROR_MESSAGE_SIZE];
     snprintf(err_msg, sizeof err_msg, "Invalid record: %s",
              validation_error_string(val_status));
     return cmd_report_error(err_msg, OP_ERROR_VALIDATION);
@@ -160,7 +161,7 @@ OpStatus execute_insert(StudentDatabase *db) {
 
   DBStatus db_status = table_add_record(table, &record);
   if (db_status != DB_SUCCESS) {
-    char err_msg[256];
+    char err_msg[ERROR_MESSAGE_SIZE];
     snprintf(err_msg, sizeof err_msg, "Failed to insert record: %s",
              db_status_string(db_status));
     return cmd_report_error(err_msg, OP_ERROR_GENERAL);

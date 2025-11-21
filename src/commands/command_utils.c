@@ -1,10 +1,11 @@
 #include "commands/command_utils.h"
+#include "constants.h"
 #include "ui.h"
 #include <ctype.h>
 #include <stdio.h>
 
 void cmd_wait_for_user(void) {
-  char continue_buf[256];
+  char continue_buf[INPUT_BUFFER_SIZE];
   printf("\nPress Enter to continue...");
   (void)fgets(continue_buf, sizeof continue_buf, stdin);
   fflush(stdout);

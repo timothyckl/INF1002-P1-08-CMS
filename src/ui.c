@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "constants.h"
 #include "utils.h"
 #include <stdio.h>
 
@@ -6,7 +7,7 @@
 #define MENU_FILE_PATH "assets/menu.txt"
 
 CMSStatus ui_display_declaration(void) {
-  int buf_size = 256;
+  int buf_size = INPUT_BUFFER_SIZE;
   FILE *handle = get_file_handle(DECLARATION_FILE_PATH);
 
   if (handle == NULL) {
@@ -19,7 +20,7 @@ CMSStatus ui_display_declaration(void) {
 }
 
 CMSStatus ui_display_menu(void) {
-  int buf_size = 256;
+  int buf_size = INPUT_BUFFER_SIZE;
   FILE *handle = get_file_handle(MENU_FILE_PATH);
 
   if (handle == NULL) {
