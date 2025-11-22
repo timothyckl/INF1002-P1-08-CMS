@@ -3,6 +3,34 @@
 A terminal-based Class Management System for managing student records. \
 The system provides core CRUD operations: `OPEN`, `SHOW`, `INSERT`, `QUERY`, `UPDATE`, `DELETE`, and `SAVE`.
 
+## Getting Started
+
+### Prerequisites
+- A C compiler (e.g. gcc or clang)
+- `make` installed (optional but recommended)
+
+### Build
+
+To compile the programme:
+```bash
+make
+```
+
+Or manually:
+```bash
+mkdir -p build
+gcc -Iinclude src/*.c src/commands/*.c -o build/main
+```
+
+### Run
+```bash
+./build/main
+```
+
+## Testing
+
+See [tests/README.md](tests/README.md) for comprehensive test documentation.
+
 ## Project Structure
 
 ```bash
@@ -70,32 +98,3 @@ INF1002-P1-08-C/
 ├── Makefile
 └── README.md
 ```
-
-
-## Getting Started
-
-### Prerequisites
-- A C compiler (e.g. gcc or clang)
-- `make` installed (optional but recommended)
-
-### Build
-
-To compile the programme:
-```bash
-make
-```
-
-Or manually:
-```bash
-mkdir -p build
-gcc -Iinclude src/*.c src/commands/*.c -o build/main
-```
-
-### Run
-```bash
-./build/main
-```
-
-## Testing
-
-See [tests/README.md](tests/README.md) for comprehensive test documentation.
