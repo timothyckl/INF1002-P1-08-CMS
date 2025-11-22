@@ -18,6 +18,10 @@
 #define MAX_DB_NAME_LENGTH 100   // database name field size
 #define MAX_AUTHORS_LENGTH 200   // authors field size
 
+// student id validation constraints
+#define MIN_STUDENT_ID 2500000 // minimum valid student id
+#define MAX_STUDENT_ID 2600000 // maximum valid student id
+
 // cryptographic constants
 #define CRC32_TABLE_SIZE 256 // standard crc32 lookup table size
 

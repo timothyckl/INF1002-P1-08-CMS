@@ -13,7 +13,7 @@
 
 typedef enum {
   VALID_RECORD = 0,        // record is valid
-  INVALID_ID_RANGE,        // id outside 0-9999999
+  INVALID_ID_RANGE,        // id outside MIN_STUDENT_ID-MAX_STUDENT_ID
   INVALID_MARK_RANGE,      // mark outside 0.0-100.0
   INVALID_EMPTY_NAME,      // name field is empty
   INVALID_EMPTY_PROGRAMME, // programme field is empty

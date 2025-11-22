@@ -9,7 +9,7 @@
 
 void test_validate_record_valid(void) {
   StudentRecord record =
-      create_test_record(1000, "John Doe", "Computer Science", 75.5f);
+      create_test_record(2500100, "John Doe", "Computer Science", 75.5f);
   ValidationStatus status = validate_record(&record);
   ASSERT_EQUAL_INT(VALID_RECORD, status, "Valid record should pass validation");
 }
@@ -21,17 +21,17 @@ void test_validate_record_null(void) {
 }
 
 void test_validate_record_id_boundary_zero(void) {
-  StudentRecord record = create_test_record(0, "Test", "Programme", 75.0f);
+  StudentRecord record = create_test_record(2500000, "Test", "Programme", 75.0f);
   ValidationStatus status = validate_record(&record);
-  ASSERT_EQUAL_INT(VALID_RECORD, status, "ID = 0 should be valid (boundary)");
+  ASSERT_EQUAL_INT(VALID_RECORD, status, "ID = 2500000 should be valid (min boundary)");
 }
 
 void test_validate_record_id_boundary_max(void) {
   StudentRecord record =
-      create_test_record(9999999, "Test", "Programme", 75.0f);
+      create_test_record(2600000, "Test", "Programme", 75.0f);
   ValidationStatus status = validate_record(&record);
   ASSERT_EQUAL_INT(VALID_RECORD, status,
-                   "ID = 9999999 should be valid (max boundary)");
+                   "ID = 2600000 should be valid (max boundary)");
 }
 
 void test_validate_record_id_negative(void) {
@@ -41,21 +41,21 @@ void test_validate_record_id_negative(void) {
 }
 
 void test_validate_record_id_overflow(void) {
-  StudentRecord record = create_invalid_id_record(10000000);
+  StudentRecord record = create_invalid_id_record(2600001);
   ValidationStatus status = validate_record(&record);
   ASSERT_EQUAL_INT(INVALID_ID_RANGE, status,
-                   "ID >= 10000000 should be invalid");
+                   "ID >= 2600001 should be invalid");
 }
 
 void test_validate_record_mark_boundary_zero(void) {
-  StudentRecord record = create_test_record(1000, "Test", "Programme", 0.0f);
+  StudentRecord record = create_test_record(2500100, "Test", "Programme", 0.0f);
   ValidationStatus status = validate_record(&record);
   ASSERT_EQUAL_INT(VALID_RECORD, status,
                    "Mark = 0.0 should be valid (boundary)");
 }
 
 void test_validate_record_mark_boundary_max(void) {
-  StudentRecord record = create_test_record(1000, "Test", "Programme", 100.0f);
+  StudentRecord record = create_test_record(2500100, "Test", "Programme", 100.0f);
   ValidationStatus status = validate_record(&record);
   ASSERT_EQUAL_INT(VALID_RECORD, status,
                    "Mark = 100.0 should be valid (max boundary)");
@@ -90,7 +90,7 @@ void test_validate_record_empty_prog(void) {
 
 void test_validate_record_name_with_spaces(void) {
   StudentRecord record =
-      create_test_record(1000, "John Doe", "Computer Science", 75.0f);
+      create_test_record(2500100, "John Doe", "Computer Science", 75.0f);
   ValidationStatus status = validate_record(&record);
   ASSERT_EQUAL_INT(VALID_RECORD, status, "Name with spaces should be valid");
 }
@@ -100,7 +100,7 @@ void test_validate_record_long_name(void) {
   memset(long_name, 'A', 49);
   long_name[49] = '\0';
   StudentRecord record =
-      create_test_record(1000, long_name, "Programme", 75.0f);
+      create_test_record(2500100, long_name, "Programme", 75.0f);
   ValidationStatus status = validate_record(&record);
   ASSERT_EQUAL_INT(VALID_RECORD, status, "49-character name should be valid");
 }
@@ -109,7 +109,7 @@ void test_validate_record_long_programme(void) {
   char long_prog[50];
   memset(long_prog, 'B', 49);
   long_prog[49] = '\0';
-  StudentRecord record = create_test_record(1000, "Test", long_prog, 75.0f);
+  StudentRecord record = create_test_record(2500100, "Test", long_prog, 75.0f);
   ValidationStatus status = validate_record(&record);
   ASSERT_EQUAL_INT(VALID_RECORD, status,
                    "49-character programme should be valid");
@@ -184,9 +184,9 @@ void test_parse_metadata_multiple_colons(void) {
 void test_parse_record_line_valid(void) {
   StudentRecord record;
   ParseStatus status =
-      parse_record_line("1234\tJohn Doe\tComputer Science\t75.50", &record);
+      parse_record_line("2500100\tJohn Doe\tComputer Science\t75.50", &record);
   ASSERT_EQUAL_INT(PARSE_SUCCESS, status, "Valid record line should parse");
-  ASSERT_EQUAL_INT(1234, record.id, "ID should be 1234");
+  ASSERT_EQUAL_INT(2500100, record.id, "ID should be 2500100");
   ASSERT_EQUAL_STRING("John Doe", record.name, "Name should match");
   ASSERT_EQUAL_STRING("Computer Science", record.prog,
                       "Programme should match");
@@ -200,7 +200,7 @@ void test_parse_record_line_null_line(void) {
 }
 
 void test_parse_record_line_null_record(void) {
-  ParseStatus status = parse_record_line("1234\tName\tProg\t75.0", NULL);
+  ParseStatus status = parse_record_line("2500100\tName\tProg\t75.0", NULL);
   ASSERT_EQUAL_INT(PARSE_ERROR_FORMAT, status, "NULL record should fail");
 }
 
@@ -212,36 +212,36 @@ void test_parse_record_line_empty(void) {
 
 void test_parse_record_line_incomplete_one_field(void) {
   StudentRecord record;
-  ParseStatus status = parse_record_line("1234", &record);
+  ParseStatus status = parse_record_line("2500100", &record);
   ASSERT_EQUAL_INT(PARSE_ERROR_INCOMPLETE, status,
                    "Line with 1 field should fail");
 }
 
 void test_parse_record_line_incomplete_two_fields(void) {
   StudentRecord record;
-  ParseStatus status = parse_record_line("1234\tJohn", &record);
+  ParseStatus status = parse_record_line("2500100\tJohn", &record);
   ASSERT_EQUAL_INT(PARSE_ERROR_INCOMPLETE, status,
                    "Line with 2 fields should fail");
 }
 
 void test_parse_record_line_incomplete_three_fields(void) {
   StudentRecord record;
-  ParseStatus status = parse_record_line("1234\tJohn\tCS", &record);
+  ParseStatus status = parse_record_line("2500100\tJohn\tCS", &record);
   ASSERT_EQUAL_INT(PARSE_ERROR_INCOMPLETE, status,
                    "Line with 3 fields should fail");
 }
 
 void test_parse_record_line_with_newline(void) {
   StudentRecord record;
-  ParseStatus status = parse_record_line("1234\tJohn\tCS\t75.0\n", &record);
+  ParseStatus status = parse_record_line("2500100\tJohn\tCS\t75.0\n", &record);
   ASSERT_EQUAL_INT(PARSE_SUCCESS, status, "Line with newline should parse");
-  ASSERT_EQUAL_INT(1234, record.id, "ID should parse correctly");
+  ASSERT_EQUAL_INT(2500100, record.id, "ID should parse correctly");
 }
 
 void test_parse_record_line_extra_fields(void) {
   StudentRecord record;
   ParseStatus status =
-      parse_record_line("1234\tJohn\tCS\t75.0\tExtra", &record);
+      parse_record_line("2500100\tJohn\tCS\t75.0\tExtra", &record);
   ASSERT_EQUAL_INT(PARSE_SUCCESS, status, "Extra fields should be ignored");
 }
 
@@ -404,10 +404,10 @@ void test_parse_file_boundary_values(void) {
 
   ASSERT_EQUAL_INT(DB_SUCCESS, status, "Boundary values file should parse");
   if (db->table_count > 0 && db->tables[0]->record_count > 0) {
-    ASSERT_EQUAL_INT(0, db->tables[0]->records[0].id,
-                     "First record should have ID=0");
-    ASSERT_EQUAL_INT(9999999, db->tables[0]->records[1].id,
-                     "Second record should have ID=9999999");
+    ASSERT_EQUAL_INT(2500000, db->tables[0]->records[0].id,
+                     "First record should have ID=2500000");
+    ASSERT_EQUAL_INT(2600000, db->tables[0]->records[1].id,
+                     "Second record should have ID=2600000");
     ASSERT_EQUAL_FLOAT(0.0f, db->tables[0]->records[0].mark, 0.01f,
                        "First record should have mark=0.0");
     ASSERT_EQUAL_FLOAT(100.0f, db->tables[0]->records[1].mark, 0.01f,

@@ -66,8 +66,8 @@ OpStatus execute_delete(StudentDatabase *db) {
   }
 
   // check ID range (fits in int)
-  if (id_long < 0 || id_long > 9999999) {
-    return cmd_report_error("Student ID must be between 0 and 9999999.",
+  if (id_long < MIN_STUDENT_ID || id_long > MAX_STUDENT_ID) {
+    return cmd_report_error("Student ID must be a 7-digit number between 2500000 and 2600000.",
                             OP_ERROR_VALIDATION);
   }
 

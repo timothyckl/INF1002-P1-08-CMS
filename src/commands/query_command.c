@@ -1,5 +1,6 @@
 #include "commands/command.h"
 #include "commands/command_utils.h"
+#include "constants.h"
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,8 +48,8 @@ OpStatus execute_query(StudentDatabase *db) {
                             OP_ERROR_VALIDATION);
   }
 
-  if (parsed_id < 0 || parsed_id > INT_MAX) {
-    return cmd_report_error("Student ID must be within 0 to 2147483647.",
+  if (parsed_id < MIN_STUDENT_ID || parsed_id > MAX_STUDENT_ID) {
+    return cmd_report_error("Student ID must be a 7-digit number between 2500000 and 2600000.",
                             OP_ERROR_VALIDATION);
   }
 

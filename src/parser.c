@@ -15,7 +15,7 @@ ValidationStatus validate_record(const StudentRecord *record) {
   }
 
   // validate ID range
-  if (record->id < 0 || record->id > 9999999) {
+  if (record->id < MIN_STUDENT_ID || record->id > MAX_STUDENT_ID) {
     return INVALID_ID_RANGE;
   }
 
@@ -172,7 +172,7 @@ ParseStatus parse_record_line(const char *line, StudentRecord *record) {
 
   // check range (full validation in validate_record, but fail fast on obviously
   // invalid values)
-  if (id_val < 0 || id_val > 9999999) {
+  if (id_val < MIN_STUDENT_ID || id_val > MAX_STUDENT_ID) {
     return PARSE_ERROR_FORMAT;
   }
 

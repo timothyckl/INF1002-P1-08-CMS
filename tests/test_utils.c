@@ -25,17 +25,17 @@ StudentRecord create_invalid_id_record(int id) {
 
 // create a record with invalid mark
 StudentRecord create_invalid_mark_record(float mark) {
-  return create_test_record(1000, "Test Name", "Test Programme", mark);
+  return create_test_record(2500100, "Test Name", "Test Programme", mark);
 }
 
 // create a record with empty name
 StudentRecord create_empty_name_record(void) {
-  return create_test_record(1000, "", "Test Programme", 75.0f);
+  return create_test_record(2500100, "", "Test Programme", 75.0f);
 }
 
 // create a record with empty prog
 StudentRecord create_empty_prog_record(void) {
-  return create_test_record(1000, "Test Name", "", 75.0f);
+  return create_test_record(2500100, "Test Name", "", 75.0f);
 }
 
 // create an empty test database
@@ -71,7 +71,7 @@ StudentDatabase *create_test_database_with_records(int count) {
     snprintf(prog, sizeof(prog), "Programme%d", (i % 3) + 1);
 
     StudentRecord record =
-        create_test_record(1000 + i, name, prog, 50.0f + (i % 50));
+        create_test_record(2500100 + i, name, prog, 50.0f + (i % 50));
 
     table_add_record(table, &record);
   }
@@ -116,7 +116,7 @@ StudentTable *create_test_table_with_records(const char *name, int count) {
     snprintf(prog, sizeof(prog), "Programme%d", (i % 3) + 1);
 
     StudentRecord record =
-        create_test_record(1000 + i, name_buf, prog, 50.0f + (i % 50));
+        create_test_record(2500100 + i, name_buf, prog, 50.0f + (i % 50));
 
     table_add_record(table, &record);
   }
