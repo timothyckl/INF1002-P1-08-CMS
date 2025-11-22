@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "database.h"
 #include "ui.h"
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -29,13 +30,116 @@ CMSStatus cms_init() {
 
 CMSStatus display_menu(void) { return ui_display_menu(); }
 
-static OpStatus get_user_input(char *buf, size_t buf_size, Operation *op) {
-  printf("Select an option: ");
-  if (fgets(buf, buf_size, stdin) == NULL) {
-    return OP_ERROR_INPUT;
+// parses user command string and maps to operation enum
+// returns OP_SUCCESS if valid command found (sets *op)
+// returns OP_HELP_REQUESTED if help command detected
+// returns OP_ERROR_INVALID if command not recognised
+static OpStatus parse_command(const char *input, Operation *op) {
+  if (!input) {
+    return OP_ERROR_INVALID;
   }
+
+  // create working copy and strip leading whitespace
+  char cmd[INPUT_BUFFER_SIZE];
+  const char *start = input;
+  while (*start == ' ' || *start == '\t') {
+    start++;
+  }
+
+  // copy to buffer
+  size_t i = 0;
+  while (*start && i < INPUT_BUFFER_SIZE - 1) {
+    cmd[i++] = *start++;
+  }
+  cmd[i] = '\0';
+
+  // strip trailing whitespace
+  while (i > 0 && (cmd[i - 1] == ' ' || cmd[i - 1] == '\t')) {
+    cmd[--i] = '\0';
+  }
+
+  // handle empty input
+  if (i == 0) {
+    return OP_ERROR_INVALID;
+  }
+
+  // convert to uppercase for case-insensitive matching
+  for (size_t j = 0; j < i; j++) {
+    cmd[j] = toupper((unsigned char)cmd[j]);
+  }
+
+  // map commands to operations (case-insensitive)
+  if (strcmp(cmd, "OPEN") == 0) {
+    *op = OPEN;
+    return OP_SUCCESS;
+  }
+  if (strcmp(cmd, "SHOW ALL") == 0) {
+    *op = SHOW_ALL;
+    return OP_SUCCESS;
+  }
+  if (strcmp(cmd, "INSERT") == 0) {
+    *op = INSERT;
+    return OP_SUCCESS;
+  }
+  if (strcmp(cmd, "QUERY") == 0) {
+    *op = QUERY;
+    return OP_SUCCESS;
+  }
+  if (strcmp(cmd, "UPDATE") == 0) {
+    *op = UPDATE;
+    return OP_SUCCESS;
+  }
+  if (strcmp(cmd, "DELETE") == 0) {
+    *op = DELETE;
+    return OP_SUCCESS;
+  }
+  if (strcmp(cmd, "SAVE") == 0) {
+    *op = SAVE;
+    return OP_SUCCESS;
+  }
+  if (strcmp(cmd, "SORT") == 0) {
+    *op = SORT;
+    return OP_SUCCESS;
+  }
+  if (strcmp(cmd, "ADV QUERY") == 0) {
+    *op = ADV_QUERY;
+    return OP_SUCCESS;
+  }
+  if (strcmp(cmd, "STATISTICS") == 0) {
+    *op = STATISTICS;
+    return OP_SUCCESS;
+  }
+  if (strcmp(cmd, "SHOW LOG") == 0) {
+    *op = SHOW_LOG;
+    return OP_SUCCESS;
+  }
+  if (strcmp(cmd, "CHECKSUM") == 0) {
+    *op = CHECKSUM;
+    return OP_SUCCESS;
+  }
+  if (strcmp(cmd, "EXIT") == 0) {
+    *op = EXIT;
+    return OP_SUCCESS;
+  }
+
+  // special presentation layer command
+  if (strcmp(cmd, "HELP") == 0) {
+    return OP_HELP_REQUESTED;
+  }
+
+  // unrecognised command
+  return OP_ERROR_INVALID;
+}
+
+static OpStatus get_user_input(char *buf, size_t buf_size, Operation *op) {
+  printf("P1_8 > ");
   fflush(stdout);
-  putchar('\n');
+
+  if (fgets(buf, buf_size, stdin) == NULL) {
+    // handle EOF (ctrl+d) as exit command
+    *op = EXIT;
+    return OP_SUCCESS;
+  }
 
   // strip trailing newline/carriage return
   size_t len = strcspn(buf, "\r\n");
@@ -43,23 +147,18 @@ static OpStatus get_user_input(char *buf, size_t buf_size, Operation *op) {
 
   // handle empty input
   if (len == 0) {
-    printf("CMS: Invalid input. Please enter a number.\n");
+    printf("CMS: Invalid input. Please enter a command.\n");
     return OP_ERROR_INVALID;
   }
 
-  // parse using strtol for safe conversion
-  char *endptr;
-  errno = 0;
-  long val = strtol(buf, &endptr, 10);
+  // parse command string to operation
+  OpStatus status = parse_command(buf, op);
 
-  // check for conversion errors
-  if (endptr == buf || *endptr != '\0' || errno == ERANGE) {
-    printf("CMS: Invalid input. Please enter a number.\n");
-    return OP_ERROR_INVALID;
+  if (status == OP_ERROR_INVALID) {
+    printf("CMS: Unknown command. Type HELP for available commands.\n");
   }
 
-  *op = (Operation)val;
-  return OP_SUCCESS;
+  return status;
 }
 
 CMSStatus run_cms_session(void) {
@@ -78,20 +177,30 @@ CMSStatus run_cms_session(void) {
     return CMS_ERROR_DB_INIT;
   }
 
-  char inp_buf[MAX_DB_NAME_LENGTH];
+  // display menu once at startup
+  status = display_menu();
+  if (status != CMS_SUCCESS) {
+    fprintf(stderr, "Failed to display menu: %s\n", cms_status_string(status));
+    db_free(db);
+    return status;
+  }
+
+  char inp_buf[INPUT_BUFFER_SIZE];
   Operation op;
   OpStatus op_status;
 
   // main loop - continue until user successfully exits
   // (exit can be cancelled if there are unsaved changes)
   do {
-    status = display_menu();
-    if (status != CMS_SUCCESS) {
-      fprintf(stderr, "Failed to display menu: %s\n",
-              cms_status_string(status));
-      return status;
-    }
     op_status = get_user_input(inp_buf, sizeof inp_buf, &op);
+
+    // handle help request (presentation layer only)
+    if (op_status == OP_HELP_REQUESTED) {
+      display_menu();
+      continue;
+    }
+
+    // handle other errors
     if (op_status != OP_SUCCESS) {
       continue;
     }

@@ -28,7 +28,8 @@ typedef enum {
   OP_ERROR_VALIDATION,    // validation failed
   OP_ERROR_DB_NOT_LOADED, // database not loaded
   OP_ERROR_GENERAL,       // general operation error
-  OP_ERROR_INVALID        // invalid operation
+  OP_ERROR_INVALID,       // invalid operation
+  OP_HELP_REQUESTED       // help menu requested (presentation layer)
 } OpStatus;
 
 // function pointer type for command execution
