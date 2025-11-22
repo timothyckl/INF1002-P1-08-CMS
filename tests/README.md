@@ -31,22 +31,19 @@ tests/
 ## Running Tests
 
 ### Compile All Tests
+
 ```bash
 make tests
 ```
 
 ### Run All Tests
+
 ```bash
 make test
 ```
 
-### Run with Memory Leak Detection (Valgrind)
-```bash
-make test-memory
-```
-*Note: Requires valgrind to be installed*
-
 ### Run Individual Test
+
 ```bash
 ./build/test_parser
 ./build/test_database
@@ -64,6 +61,7 @@ make test-memory
 ### Parser Module (`test_parser.c`) - 51 tests
 
 **validate_record()** - 15 tests
+
 - Valid record validation
 - NULL pointer handling
 - ID boundary values (0, 9999999, -1, 10000000)
@@ -72,6 +70,7 @@ make test-memory
 - Long names and programmes
 
 **parse_metadata()** - 8 tests
+
 - Valid metadata parsing
 - Missing colons
 - Empty values
@@ -79,6 +78,7 @@ make test-memory
 - Multiple colons in value
 
 **parse_record_line()** - 9 tests
+
 - Valid record line parsing
 - Incomplete records (1-3 fields)
 - NULL pointer handling
@@ -86,12 +86,14 @@ make test-memory
 - Newline stripping
 
 **parse_column_headers()** - 6 tests
+
 - Standard headers
 - NULL pointer handling
 - Empty lines
 - Single column headers
 
 **parse_file()** - 7 tests
+
 - Valid file parsing
 - Empty files
 - Invalid records (skipping)
@@ -101,16 +103,19 @@ make test-memory
 ### Database Module (`test_database.c`) - 53 tests
 
 **table_init()** - 3 tests
+
 - Valid initialisation
 - Empty table name
 - Long table name truncation
 
 **table_free()** - 3 tests
+
 - Empty table cleanup
 - Table with records cleanup
 - NULL pointer handling
 
 **table_add_record()** - 9 tests
+
 - Adding to empty table
 - Multiple additions
 - Capacity growth (10 → 20)
@@ -118,6 +123,7 @@ make test-memory
 - Boundary ID and mark values
 
 **table_remove_record()** - 9 tests
+
 - Removing existing records
 - Nonexistent IDs
 - First, last, middle record removal
@@ -125,26 +131,31 @@ make test-memory
 - NULL pointer handling
 
 **db_init()** - 1 test
+
 - Valid database initialisation
 
 **db_add_table()** - 5 tests
+
 - Adding first table
 - Multiple tables
 - Capacity growth (2 → 4)
 - NULL pointer handling
 
 **db_load()** - 5 tests
+
 - Valid file loading
 - Nonexistent files
 - Empty files
 - NULL pointer handling
 
 **db_save()** - 4 tests
+
 - Valid saving
 - Empty database
 - NULL pointer handling
 
 **db_update_record()** - 8 tests
+
 - Update name, programme, mark individually
 - Update all fields
 - Nonexistent ID
@@ -180,14 +191,17 @@ make test-memory
 ### Event Log Module (`test_event_log.c`) - 14 tests
 
 **event_log_init()** - 1 test
+
 - Valid initialisation
 
 **event_log_free()** - 3 tests
+
 - Empty log cleanup
 - Log with events cleanup
 - NULL pointer handling
 
 **log_event()** - 10 tests
+
 - First event logging
 - Multiple events
 - NULL log handling
@@ -326,11 +340,13 @@ int main(void) {
 ## Test Output
 
 ### Successful Test
+
 ```
 ✓ Test description
 ```
 
 ### Failed Test
+
 ```
 ✗ Test description
     Expected: 5, Got: 3
@@ -338,6 +354,7 @@ int main(void) {
 ```
 
 ### Suite Summary
+
 ```
 ═══════════════════════════════════════════════════════════
 Tests Run: 51 | Passed: 51 | Failed: 0
@@ -347,12 +364,15 @@ Tests Run: 51 | Passed: 51 | Failed: 0
 ## Limitations
 
 ### Command Testing
+
 Full command testing requires:
+
 - stdin mocking/redirection
 - stdout capture
 - Interactive input simulation
 
 Current tests cover:
+
 - Database precondition validation
 - Error handling
 - Success cases without user input
@@ -360,6 +380,7 @@ Current tests cover:
 ## Troubleshooting
 
 ### Test Compilation Fails
+
 ```bash
 # Ensure all dependencies are compiled
 make clean
