@@ -383,13 +383,31 @@ DBStatus parse_file(const char *filename, StudentDatabase *db,
         ValidationStatus validation = validate_record(&record);
 
         if (validation == VALID_RECORD) {
-          DBStatus add_status = table_add_record(current_table, &record);
-          if (add_status != DB_SUCCESS) {
-            fclose(fp);
-            return add_status;
+          // check for duplicate id
+          int duplicate_found = 0;
+          for (size_t i = 0; i < current_table->record_count; i++) {
+            if (current_table->records[i].id == record.id) {
+              duplicate_found = 1;
+              break;
+            }
           }
-          if (stats) {
-            stats->records_loaded++;
+
+          if (duplicate_found) {
+            printf("CMS: Warning - duplicate ID %d at line %d (ignored)\n",
+                   record.id, line_num);
+            if (stats) {
+              stats->records_skipped++;
+              stats->validation_errors++;
+            }
+          } else {
+            DBStatus add_status = table_add_record(current_table, &record);
+            if (add_status != DB_SUCCESS) {
+              fclose(fp);
+              return add_status;
+            }
+            if (stats) {
+              stats->records_loaded++;
+            }
           }
         } else {
           printf("CMS: Warning - %s at line %d\n",
