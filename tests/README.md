@@ -41,6 +41,9 @@ make tests
 ```bash
 make test
 ```
+```bash
+$cmdSrc = Get-ChildItem src\commands\*.c; Get-ChildItem tests\test_*.c | Where-Object Name -ne 'test_utils.c' | ForEach-Object { gcc -std=c11 -Wall -Wextra -g $_.FullName tests/test_utils.c src/adv_query.c src/cms.c src/database.c src/parser.c src/sorting.c src/utils.c src/event_log.c src/checksum.c src/statistics.c src/ui.c @cmdSrc -Iinclude -o ("build/" + $_.BaseName + ".exe") }
+```
 
 ### Run Individual Test
 
