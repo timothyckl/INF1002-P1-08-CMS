@@ -162,9 +162,9 @@ Skipped: 1 validation error(s), 1 parse error(s)
 **Example:**
 ```
 P1_8 > OPEN
-Enter file path (or press ENTER for default): [ENTER]
-CMS: Database loaded successfully from 'data/P1_8-CMS.txt'
-Total records: 4 loaded, 0 skipped
+Enter a file path (press ENTER for default data file): abc.txt
+CMS: Error - Cannot open file 'abc.txt'
+CMS: Failed to load database: file not found
 
 Press ENTER to continue...
 ```
