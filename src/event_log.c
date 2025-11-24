@@ -3,11 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * initialises a new event log with initial capacity
- *
- * allocates memory for log structure and entries array
- * fails gracefully by returning NULL on allocation failure
+/**
+ * @brief initialises a new event log
+ * @return pointer to new log on success, NULL on allocation failure
+ * @note caller responsible for freeing with event_log_free()
+ * @note allocates initial capacity of 50 entries
  */
 EventLog *event_log_init(void) {
   // allocate log structure
@@ -30,11 +30,10 @@ EventLog *event_log_init(void) {
   return log;
 }
 
-/*
- * frees event log and all associated memory
- *
- * defensive null pointer check prevents crashes
- * frees entries array before freeing log structure
+/**
+ * @brief frees event log and all associated memory
+ * @param[in] log pointer to the event log to free (can be NULL)
+ * @note safely handles NULL pointer (no-op)
  */
 void event_log_free(EventLog *log) {
   if (!log) {
@@ -50,15 +49,15 @@ void event_log_free(EventLog *log) {
   free(log);
 }
 
-/*
- * logs an operation event with automatic capacity management
- *
- * implements growth strategy:
- * 1. doubles capacity when full (up to 1000 max)
- * 2. uses circular buffer when max capacity reached
- * 3. fails silently on allocation errors (non-critical)
- *
- * note: logging infrastructure should never crash application
+/**
+ * @brief logs an operation event
+ * @param[in,out] log pointer to the event log
+ * @param[in] op operation type to log
+ * @param[in] status operation result status
+ * @note automatically handles capacity growth (doubles until 1000 max)
+ * @note uses circular buffer overflow (overwrites oldest entries)
+ * @note captures current timestamp automatically
+ * @note fails silently on errors (logging is non-critical infrastructure)
  */
 void log_event(EventLog *log, Operation op, OpStatus status) {
   // defensive null check
@@ -118,11 +117,11 @@ void log_event(EventLog *log, Operation op, OpStatus status) {
   }
 }
 
-/*
- * converts operation enum to display string
- *
- * provides human-readable operation names for display
- * maintains consistent uppercase naming convention
+/**
+ * @brief converts operation enum to display string
+ * @param[in] op operation enum value to convert
+ * @return pointer to static string with operation name (e.g., "OPEN", "INSERT")
+ * @note returns "UNKNOWN" for invalid operation values
  */
 const char *event_operation_to_string(Operation op) {
   switch (op) {
@@ -153,11 +152,11 @@ const char *event_operation_to_string(Operation op) {
   }
 }
 
-/*
- * converts operation status to display string
- *
- * provides human-readable status descriptions for display
- * uppercase for consistency with operation names
+/**
+ * @brief converts operation status to display string
+ * @param[in] status operation status value to convert
+ * @return pointer to static string with status description (e.g., "SUCCESS", "ERROR")
+ * @note returns "UNKNOWN" for invalid status values
  */
 const char *event_status_to_string(OpStatus status) {
   switch (status) {
@@ -180,11 +179,13 @@ const char *event_status_to_string(OpStatus status) {
   }
 }
 
-/*
- * formats timestamp for display using ISO 8601 format
- *
- * format: YYYY-MM-DD HH:MM:SS (british english compatible)
- * provides clear, unambiguous timestamp representation
+/**
+ * @brief formats timestamp for display
+ * @param[in] timestamp unix timestamp to format
+ * @param[out] buffer output buffer for formatted string
+ * @param[in] buffer_size size of output buffer (recommend 32 bytes minimum)
+ * @return pointer to buffer for convenience
+ * @note uses ISO 8601 format: YYYY-MM-DD HH:MM:SS
  */
 const char *format_timestamp(time_t timestamp, char *buffer,
                              size_t buffer_size) {

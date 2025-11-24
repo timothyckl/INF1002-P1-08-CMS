@@ -6,6 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/**
+ * @brief executes QUERY operation to search for records
+ * @param[in] db pointer to the database
+ * @return OP_SUCCESS on success, appropriate error code on failure
+ */
 OpStatus execute_query(StudentDatabase *db) {
   if (!db) {
     return cmd_report_error("Database error.", OP_ERROR_GENERAL);

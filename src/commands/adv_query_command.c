@@ -3,6 +3,11 @@
 #include "commands/command_utils.h"
 #include <stdio.h>
 
+/**
+ * @brief executes ADV_QUERY operation for advanced filtering
+ * @param[in] db pointer to the database
+ * @return OP_SUCCESS on success, appropriate error code on failure
+ */
 OpStatus execute_adv_query(StudentDatabase *db) {
   if (!db) {
     return cmd_report_error("Database error.", OP_ERROR_GENERAL);

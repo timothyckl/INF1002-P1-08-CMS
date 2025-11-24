@@ -10,6 +10,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+/**
+ * @brief initialises the cms application and database
+ * @return CMS_SUCCESS on success, appropriate error code on failure
+ */
 CMSStatus cms_init() {
   // display declaration
   CMSStatus status = ui_display_declaration();
@@ -28,6 +32,10 @@ CMSStatus cms_init() {
   return CMS_SUCCESS;
 }
 
+/**
+ * @brief displays the main menu options to the user
+ * @return CMS_SUCCESS on success, appropriate error code on failure
+ */
 CMSStatus display_menu(void) { return ui_display_menu(); }
 
 // parses user command string and maps to operation enum
@@ -161,6 +169,10 @@ static OpStatus get_user_input(char *buf, size_t buf_size, Operation *op) {
   return status;
 }
 
+/**
+ * @brief runs the cms session, processing user commands
+ * @return CMS_SUCCESS on success, appropriate error code on failure
+ */
 CMSStatus run_cms_session(void) {
   CMSStatus status;
 
@@ -212,6 +224,11 @@ CMSStatus run_cms_session(void) {
   return CMS_SUCCESS;
 }
 
+/**
+ * @brief converts cms status code to human-readable string
+ * @param[in] status the cms status code to convert
+ * @return pointer to static string describing the status
+ */
 const char *cms_status_string(CMSStatus status) {
   switch (status) {
   case CMS_SUCCESS:

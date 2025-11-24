@@ -6,6 +6,11 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * @brief executes OPEN operation to load database from file
+ * @param[in,out] db pointer to the database
+ * @return OP_SUCCESS on success, appropriate error code on failure
+ */
 OpStatus execute_open(StudentDatabase *db) {
   if (db->is_loaded) {
     // warn about unsaved changes before reload using checksums

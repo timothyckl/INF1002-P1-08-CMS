@@ -2,15 +2,17 @@
 #include "database.h"
 #include <string.h>
 
-/*
- * calculates summary statistics for all student records in a table
- *
- * computes total count, average mark, highest/lowest marks with student details
- * uses double precision for accumulation to prevent overflow with large
- * datasets
- *
- * note: when multiple students share the same highest or lowest
- * mark, the first occurrence in the table is reported
+/**
+ * @brief calculates summary statistics for all student records in a table
+ * @param[in] table pointer to student table (must not be NULL)
+ * @param[out] stats pointer to statistics structure to populate (must not be NULL)
+ * @return DB_SUCCESS on success, DB_ERROR_NULL_POINTER if table or stats is NULL,
+ *         DB_ERROR_INVALID_DATA if table is empty or records array is NULL
+ * @note computes total count, average mark, highest mark with student details,
+ *       and lowest mark with student details
+ * @note uses double precision for accumulation to prevent overflow with large datasets
+ * @note tie-breaking policy: when multiple students share the same highest or
+ *       lowest mark, the first occurrence in the table is reported
  */
 DBStatus calculate_statistics(StudentTable *table, StudentStatistics *stats) {
   // defensive null pointer checks

@@ -5,9 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * validate a student record
- * returns: VALID_RECORD if valid, error code otherwise
+/**
+ * @brief validates student record fields
+ * @param[in] record pointer to the record to validate
+ * @return VALID_RECORD if valid, appropriate error code otherwise
  */
 ValidationStatus validate_record(const StudentRecord *record) {
   if (!record) {
@@ -37,9 +38,10 @@ ValidationStatus validate_record(const StudentRecord *record) {
   return VALID_RECORD;
 }
 
-/*
- * convert validation error to human-readable string
- * returns: string description of validation error
+/**
+ * @brief converts validation error code to human-readable string
+ * @param[in] error the validation error code to convert
+ * @return pointer to static string describing the error
  */
 const char *validation_error_string(ValidationStatus error) {
   switch (error) {
@@ -60,9 +62,10 @@ const char *validation_error_string(ValidationStatus error) {
   }
 }
 
-/*
- * convert parse status to human-readable string
- * returns: string description of parse status
+/**
+ * @brief converts parse status code to human-readable string
+ * @param[in] status the parse status code to convert
+ * @return pointer to static string describing the status
  */
 const char *parse_status_string(ParseStatus status) {
   switch (status) {
@@ -79,9 +82,12 @@ const char *parse_status_string(ParseStatus status) {
   }
 }
 
-/*
- * parse metadata line in format "Key: value"
- * returns: PARSE_SUCCESS on success, error code on failure
+/**
+ * @brief parses single metadata line (e.g., "Database Name: value")
+ * @param[in] line input line to parse
+ * @param[out] key buffer to store the parsed key
+ * @param[out] value buffer to store the parsed value
+ * @return PARSE_SUCCESS on success, appropriate error code on failure
  */
 ParseStatus parse_metadata(const char *line, char *key, char *value) {
   if (!line || !key || !value) {
@@ -125,9 +131,11 @@ ParseStatus parse_metadata(const char *line, char *key, char *value) {
   return PARSE_SUCCESS;
 }
 
-/*
- * parse data record line (tab-separated fields)
- * returns: PARSE_SUCCESS on success, error code on failure
+/**
+ * @brief parses single data record line into StudentRecord
+ * @param[in] line input line containing student data
+ * @param[out] record pointer to record structure to populate
+ * @return PARSE_SUCCESS on success, appropriate error code on failure
  */
 ParseStatus parse_record_line(const char *line, StudentRecord *record) {
   if (!line || !record) {
@@ -217,9 +225,12 @@ ParseStatus parse_record_line(const char *line, StudentRecord *record) {
   return PARSE_SUCCESS;
 }
 
-/*
- * parse column header line (tab-separated)
- * returns: PARSE_SUCCESS on success, error code on failure
+/**
+ * @brief parses column header line
+ * @param[in] line input line containing column headers
+ * @param[out] headers pointer to array of header strings (allocated by function)
+ * @param[out] count pointer to store number of headers parsed
+ * @return PARSE_SUCCESS on success, appropriate error code on failure
  */
 ParseStatus parse_column_headers(const char *line, char ***headers,
                                  size_t *count) {
@@ -285,9 +296,13 @@ ParseStatus parse_column_headers(const char *line, char ***headers,
   return PARSE_SUCCESS;
 }
 
-/*
- * parse entire file into database with state machine
- * returns: DB_SUCCESS on success, error code on failure
+/**
+ * @brief parses entire file into database
+ * @param[in] filename path to the file to parse
+ * @param[in,out] db pointer to the database to populate
+ * @param[out] stats optional pointer to statistics structure (can be NULL)
+ * @return DB_SUCCESS on success, appropriate error code on failure
+ * @note if stats is provided, it will be populated with parsing statistics
  */
 DBStatus parse_file(const char *filename, StudentDatabase *db,
                     ParseStatistics *stats) {

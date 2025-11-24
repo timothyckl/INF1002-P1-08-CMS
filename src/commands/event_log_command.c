@@ -3,12 +3,10 @@
 #include "event_log.h"
 #include <stdio.h>
 
-/*
- * displays operation history for current session
- *
- * shows all logged operations with timestamps, operation names, and status
- * validates database and event log existence before display
- * handles empty log and circular buffer cases
+/**
+ * @brief executes SHOW_LOG operation to display event history
+ * @param[in] db pointer to the database
+ * @return OP_SUCCESS on success, appropriate error code on failure
  */
 OpStatus execute_show_log(StudentDatabase *db) {
   // validate database pointer

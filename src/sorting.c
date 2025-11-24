@@ -119,10 +119,13 @@ static int compare_mark_desc(const StudentRecord *a, const StudentRecord *b) {
   return 0;
 }
 
-/*
- * sort student records by specified field and order
- * uses stable bubble sort algorithm
- * modifies records array in-place
+/**
+ * @brief sorts student records by specified field and order
+ * @param[in,out] records array of student records to sort (modified in-place)
+ * @param[in] count number of records in the array
+ * @param[in] field field to sort by (ID or mark)
+ * @param[in] order sort order (ascending or descending)
+ * @note uses stable bubble sort algorithm
  */
 void sort_records(StudentRecord *records, size_t count, SortField field,
                   SortOrder order) {

@@ -3,6 +3,11 @@
 #include "statistics.h"
 #include <stdio.h>
 
+/**
+ * @brief executes STATISTICS operation to compute summary stats
+ * @param[in] db pointer to the database
+ * @return OP_SUCCESS on success, appropriate error code on failure
+ */
 OpStatus execute_statistics(StudentDatabase *db) {
   // validate database pointer
   if (!db) {

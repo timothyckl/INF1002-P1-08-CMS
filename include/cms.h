@@ -1,11 +1,14 @@
 #ifndef CMS_H
 #define CMS_H
 
-/*
- * class management system (cms) module
+/**
+ * @file cms.h
+ * @brief class management system (cms) main application module
  *
  * provides the main program structure including initialisation,
  * menu display, and main event loop for the interactive cms application.
+ *
+ * @author Group P1-08 (Timothy, Aamir, Hasif, Dalton, Gin)
  */
 
 typedef enum {
@@ -17,16 +20,29 @@ typedef enum {
   CMS_ERROR_FILE_IO           // file i/o operation failed
 } CMSStatus;
 
-// initialises the cms application and database
+/**
+ * @brief initialises the cms application and database
+ * @return CMS_SUCCESS on success, appropriate error code on failure
+ */
 CMSStatus cms_init(void);
 
-// displays the main menu options to the user
+/**
+ * @brief displays the main menu options to the user
+ * @return CMS_SUCCESS on success, appropriate error code on failure
+ */
 CMSStatus display_menu(void);
 
-// runs the cms session, processing user commands
+/**
+ * @brief runs the cms session, processing user commands
+ * @return CMS_SUCCESS on success, appropriate error code on failure
+ */
 CMSStatus run_cms_session(void);
 
-// converts cms status code to readable string
+/**
+ * @brief converts cms status code to human-readable string
+ * @param[in] status the cms status code to convert
+ * @return pointer to static string describing the status
+ */
 const char *cms_status_string(CMSStatus status);
 
-#endif
+#endif // CMS_H

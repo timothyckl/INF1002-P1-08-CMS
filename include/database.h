@@ -1,13 +1,16 @@
 #ifndef DATABASE_H
 #define DATABASE_H
 
-/*
- * database module
+/**
+ * @file database.h
+ * @brief database module for managing student records in tables
  *
  * manages student records organised in tables within a database structure.
  * uses dynamic arrays that grow automatically as needed (doubling capacity).
  * supports loading from and saving to text files, along with basic
  * operations like adding and removing records.
+ *
+ * @author Group P1-08 (Timothy, Aamir, Hasif, Dalton, Gin)
  */
 
 #include <stdbool.h>
@@ -84,45 +87,103 @@ typedef struct {
 } StudentDatabase;
 
 // table lifecycle
-// creates a new empty table with the given name
+/**
+ * @brief creates a new empty table with the given name
+ * @param[in] table_name name for the new table
+ * @return pointer to newly created StudentTable on success, NULL on failure
+ */
 StudentTable *table_init(const char *table_name);
 
-// frees all memory associated with a table
+/**
+ * @brief frees all memory associated with a table
+ * @param[in] table pointer to the table to free (can be NULL)
+ */
 void table_free(StudentTable *table);
 
-// sets column headers for a table (takes ownership of headers array)
+/**
+ * @brief sets column headers for a table (takes ownership of headers array)
+ * @param[in,out] table pointer to the table to modify
+ * @param[in] headers array of header strings
+ * @param[in] count number of headers in the array
+ * @return DB_SUCCESS on success, appropriate error code on failure
+ */
 DBStatus table_set_column_headers(StudentTable *table, char **headers,
                                   size_t count);
 
-// adds a record to the table (grows capacity if needed)
+/**
+ * @brief adds a record to the table (grows capacity if needed)
+ * @param[in,out] table pointer to the table to add the record to
+ * @param[in] record pointer to the student record to add
+ * @return DB_SUCCESS on success, DB_ERROR_MEMORY if reallocation fails
+ */
 DBStatus table_add_record(StudentTable *table, StudentRecord *record);
 
-// removes a record from the table by student id
+/**
+ * @brief removes a record from the table by student id
+ * @param[in,out] table pointer to the table to remove the record from
+ * @param[in] student_id id of the student record to remove
+ * @return DB_SUCCESS on success, DB_ERROR_NOT_FOUND if record not found
+ */
 DBStatus table_remove_record(StudentTable *table, int student_id);
 
 // database lifecycle
-// creates a new empty database
+/**
+ * @brief creates a new empty database
+ * @return pointer to newly created StudentDatabase on success, NULL on failure
+ */
 StudentDatabase *db_init(void);
 
-// frees all memory associated with a database
+/**
+ * @brief frees all memory associated with a database
+ * @param[in] db pointer to the database to free (can be NULL)
+ */
 void db_free(StudentDatabase *db);
 
-// adds a table to the database (grows capacity if needed)
+/**
+ * @brief adds a table to the database (grows capacity if needed)
+ * @param[in,out] db pointer to the database to add the table to
+ * @param[in] table pointer to the table to add
+ * @return DB_SUCCESS on success, DB_ERROR_MEMORY if reallocation fails
+ */
 DBStatus db_add_table(StudentDatabase *db, StudentTable *table);
 
 // file operations
-// loads database from a text file
-// if stats is provided, it will be populated with parsing statistics (from parser.h)
+/**
+ * @brief loads database from a text file
+ * @param[in,out] db pointer to the database to load data into
+ * @param[in] filename path to the file to load
+ * @param[out] stats optional pointer to ParsingStats structure (can be NULL)
+ * @return DB_SUCCESS on success, appropriate error code on failure
+ * @note if stats is provided, it will be populated with parsing statistics
+ */
 DBStatus db_load(StudentDatabase *db, const char *filename, void *stats);
 
-// saves database to a text file
+/**
+ * @brief saves database to a text file
+ * @param[in] db pointer to the database to save
+ * @param[in] filename path to the file to save to
+ * @return DB_SUCCESS on success, appropriate error code on failure
+ */
 DBStatus db_save(StudentDatabase *db, const char *filename);
 
-// helper to convert status to string (for error messages)
+/**
+ * @brief converts database status code to human-readable string
+ * @param[in] status the database status code to convert
+ * @return pointer to static string describing the status
+ */
 const char *db_status_string(DBStatus status);
 
-// updates a student record by id (only non-null fields will be updated)
+/**
+ * @brief updates a student record by id
+ * @param[in,out] db pointer to the database containing the record
+ * @param[in] id student id of the record to update
+ * @param[in] new_name new name (NULL to leave unchanged)
+ * @param[in] new_prog new programme (NULL to leave unchanged)
+ * @param[in] new_mark pointer to new mark (NULL to leave unchanged)
+ * @return DB_SUCCESS on success, appropriate error code on failure
+ * @note only non-null parameters will update the corresponding field
+ */
 DBStatus db_update_record(StudentDatabase *db, int id, const char *new_name,
                           const char *new_prog, const float *new_mark);
 
-#endif
+#endif // DATABASE_H

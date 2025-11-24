@@ -1,6 +1,16 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
+/**
+ * @file statistics.h
+ * @brief statistics module for computing summary data on student records
+ *
+ * calculates aggregate statistics including count, average mark, highest mark,
+ * and lowest mark with associated student details.
+ *
+ * @author Group P1-08 (Timothy, Aamir, Hasif, Dalton, Gin)
+ */
+
 #include "database.h"
 #include <stddef.h>
 
@@ -44,4 +54,4 @@ typedef struct {
  */
 DBStatus calculate_statistics(StudentTable *table, StudentStatistics *stats);
 
-#endif
+#endif // STATISTICS_H

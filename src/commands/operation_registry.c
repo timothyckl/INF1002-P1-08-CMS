@@ -42,6 +42,12 @@ static bool should_log_operation(Operation op) {
           op != CHECKSUM);
 }
 
+/**
+ * @brief executes the specified operation on the database
+ * @param[in] op operation type to execute
+ * @param[in,out] db pointer to the database
+ * @return OP_SUCCESS on success, appropriate error code on failure
+ */
 OpStatus execute_operation(Operation op, StudentDatabase *db) {
   // handle EXIT operation specially
   if (op == EXIT) {

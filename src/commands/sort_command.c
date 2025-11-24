@@ -5,10 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 
-/*
- * sort student records by id or mark in ascending or descending order
- * prompts user for sort field and order, then performs in-place sort
- * returns: OP_SUCCESS on success, OpStatus error code on failure
+/**
+ * @brief executes SORT operation to order records
+ * @param[in,out] db pointer to the database
+ * @return OP_SUCCESS on success, appropriate error code on failure
  */
 OpStatus execute_sort(StudentDatabase *db) {
   if (!db) {

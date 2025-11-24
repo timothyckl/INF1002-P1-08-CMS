@@ -1,5 +1,11 @@
 #include "utils.h"
 
+/**
+ * @brief validates command-line arguments
+ * @param[in] argc argument count from main()
+ * @param[in] argv argument vector from main()
+ * @return 0 if arguments are valid, non-zero otherwise
+ */
 int check_args(int argc, char *argv[]) {
   if (argc != 2) {
     fprintf(stderr, "Usage: %s <path-to-file>\n", argv[0]);
@@ -8,6 +14,11 @@ int check_args(int argc, char *argv[]) {
   return 0;
 }
 
+/**
+ * @brief opens a file and returns file handle
+ * @param[in] file_path path to the file to open
+ * @return file pointer on success, NULL on failure
+ */
 FILE *get_file_handle(const char *file_path) {
   FILE *file_handle = fopen(file_path, "r");
 
@@ -19,6 +30,12 @@ FILE *get_file_handle(const char *file_path) {
   return file_handle;
 }
 
+/**
+ * @brief prints file contents line by line with optional line numbers
+ * @param[in] handle file handle to read from
+ * @param[in] buffer_size size of buffer for reading lines
+ * @param[in] show_line_num whether to display line numbers
+ */
 void print_file_lines(FILE *handle, int buffer_size, bool show_line_num) {
   char buffer[buffer_size];
   int current_line = 0;

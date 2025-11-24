@@ -6,11 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * update existing student record in database
- * prompts user for student id, field selection, and new value
- * returns: OP_SUCCESS on successful update or cancellation, OpStatus error
- * code on failure
+/**
+ * @brief executes UPDATE operation to modify existing record
+ * @param[in,out] db pointer to the database
+ * @return OP_SUCCESS on success, appropriate error code on failure
  */
 OpStatus execute_update(StudentDatabase *db) {
   // validate database pointer

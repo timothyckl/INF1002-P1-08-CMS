@@ -5,6 +5,11 @@
 #include <sys/stat.h>
 #include <time.h>
 
+/**
+ * @brief executes CHECKSUM operation to verify data integrity
+ * @param[in] db pointer to the database
+ * @return OP_SUCCESS on success, appropriate error code on failure
+ */
 OpStatus execute_checksum(StudentDatabase *db) {
   // validate database pointer
   if (!db) {

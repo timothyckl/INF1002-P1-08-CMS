@@ -3,6 +3,11 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * @brief executes SHOW_ALL operation to display all records
+ * @param[in] db pointer to the database
+ * @return OP_SUCCESS on success, appropriate error code on failure
+ */
 OpStatus execute_show_all(StudentDatabase *db) {
   if (!db) {
     return cmd_report_error("Database error.", OP_ERROR_GENERAL);

@@ -280,7 +280,12 @@ static int apply_stage(const QueryStage *stage, StudentRecord **records,
   return apply_mark_filter(records, keep, count, stage->op, stage->value);
 }
 
-// entry to run a pipeline string (already built) against the database
+/**
+ * @brief executes a query pipeline and displays matching records
+ * @param[in] db pointer to the database to query
+ * @param[in] pipeline query string with filter conditions separated by '|'
+ * @return ADV_QUERY_SUCCESS on success, appropriate error code on failure
+ */
 AdvQueryStatus adv_query_execute(StudentDatabase *db, const char *pipeline) {
   if (!db || !pipeline) {
     return ADV_QUERY_ERROR_INVALID_ARGUMENT;
@@ -362,6 +367,11 @@ AdvQueryStatus adv_query_execute(StudentDatabase *db, const char *pipeline) {
   return ADV_QUERY_SUCCESS;
 }
 
+/**
+ * @brief converts query status code to human-readable string
+ * @param[in] status the query status code to convert
+ * @return pointer to static string describing the status
+ */
 const char *adv_query_status_string(AdvQueryStatus status) {
   switch (status) {
   case ADV_QUERY_SUCCESS:
@@ -543,7 +553,11 @@ static void build_pipeline(const AdvQuerySelection *sel, size_t count,
   }
 }
 
-// guided prompt entry point used by menus/test harness
+/**
+ * @brief runs interactive query prompt with guided help
+ * @param[in] db pointer to the database to query
+ * @return ADV_QUERY_SUCCESS on success, appropriate error code on failure
+ */
 AdvQueryStatus adv_query_run_prompt(StudentDatabase *db) {
   if (!db) {
     return ADV_QUERY_ERROR_INVALID_ARGUMENT;

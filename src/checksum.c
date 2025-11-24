@@ -39,6 +39,11 @@ static unsigned long crc32(const unsigned char *data, size_t length) {
   return crc ^ 0xFFFFFFFF;
 }
 
+/**
+ * @brief computes CRC32 checksum of a single record
+ * @param[in] record pointer to the student record to checksum
+ * @return CRC32 checksum value of the record
+ */
 unsigned long compute_record_checksum(const StudentRecord *record) {
   if (!record)
     return 0;
@@ -76,6 +81,11 @@ unsigned long compute_record_checksum(const StudentRecord *record) {
   return crc32(buffer, offset);
 }
 
+/**
+ * @brief computes CRC32 checksum of entire database
+ * @param[in] db pointer to the database to checksum
+ * @return CRC32 checksum value of the database
+ */
 unsigned long compute_database_checksum(const StudentDatabase *db) {
   if (!db || !db->is_loaded || db->table_count == 0)
     return 0;
@@ -99,6 +109,11 @@ unsigned long compute_database_checksum(const StudentDatabase *db) {
   return combined_crc;
 }
 
+/**
+ * @brief computes CRC32 checksum of file on disk
+ * @param[in] filepath path to the file to checksum
+ * @return CRC32 checksum value of the file, 0 on error
+ */
 unsigned long compute_file_checksum(const char *filepath) {
   if (!filepath)
     return 0;

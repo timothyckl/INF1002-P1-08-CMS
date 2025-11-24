@@ -7,11 +7,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * delete existing student record from database
- * prompts user for student id, confirms deletion, and removes record
- * returns: OP_SUCCESS on successful deletion or cancellation, OpStatus error
- * code on failure
+/**
+ * @brief executes DELETE operation to remove record
+ * @param[in,out] db pointer to the database
+ * @return OP_SUCCESS on success, appropriate error code on failure
  */
 OpStatus execute_delete(StudentDatabase *db) {
   // validate database pointer

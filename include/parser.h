@@ -1,12 +1,15 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-/*
- * parser module
+/**
+ * @file parser.h
+ * @brief parser module for reading and validating database files
  *
  * handles reading and parsing student database files.
  * processes metadata lines, table headers, and student records.
  * validates data during parsing to ensure correctness.
+ *
+ * @author Group P1-08 (Timothy, Aamir, Hasif, Dalton, Gin)
  */
 
 #include "database.h"
@@ -36,26 +39,63 @@ typedef struct {
   int parse_errors;            // count of parse format errors
 } ParseStatistics;
 
-// parse entire file into database
-// if stats is provided, it will be populated with parsing statistics
+/**
+ * @brief parses entire file into database
+ * @param[in] filename path to the file to parse
+ * @param[in,out] db pointer to the database to populate
+ * @param[out] stats optional pointer to statistics structure (can be NULL)
+ * @return DB_SUCCESS on success, appropriate error code on failure
+ * @note if stats is provided, it will be populated with parsing statistics
+ */
 DBStatus parse_file(const char *filename, StudentDatabase *db,
                     ParseStatistics *stats);
 
-// parse single metadata line
+/**
+ * @brief parses single metadata line (e.g., "Database Name: value")
+ * @param[in] line input line to parse
+ * @param[out] key buffer to store the parsed key
+ * @param[out] value buffer to store the parsed value
+ * @return PARSE_SUCCESS on success, appropriate error code on failure
+ */
 ParseStatus parse_metadata(const char *line, char *key, char *value);
 
-// parse single data record line
+/**
+ * @brief parses single data record line into StudentRecord
+ * @param[in] line input line containing student data
+ * @param[out] record pointer to record structure to populate
+ * @return PARSE_SUCCESS on success, appropriate error code on failure
+ */
 ParseStatus parse_record_line(const char *line, StudentRecord *record);
 
-// parse column header line
+/**
+ * @brief parses column header line
+ * @param[in] line input line containing column headers
+ * @param[out] headers pointer to array of header strings (allocated by function)
+ * @param[out] count pointer to store number of headers parsed
+ * @return PARSE_SUCCESS on success, appropriate error code on failure
+ */
 ParseStatus parse_column_headers(const char *line, char ***headers,
                                  size_t *count);
 
-// validation
+/**
+ * @brief validates student record fields
+ * @param[in] record pointer to the record to validate
+ * @return VALID_RECORD if valid, appropriate error code otherwise
+ */
 ValidationStatus validate_record(const StudentRecord *record);
 
-// helper to convert codes to strings
+/**
+ * @brief converts parse status code to human-readable string
+ * @param[in] status the parse status code to convert
+ * @return pointer to static string describing the status
+ */
 const char *parse_status_string(ParseStatus status);
+
+/**
+ * @brief converts validation error code to human-readable string
+ * @param[in] error the validation error code to convert
+ * @return pointer to static string describing the error
+ */
 const char *validation_error_string(ValidationStatus error);
 
-#endif
+#endif // PARSER_H

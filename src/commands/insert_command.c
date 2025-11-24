@@ -6,10 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * insert new student record into database
- * prompts user for student details and validates input
- * returns: OP_SUCCESS on successful insertion, OpStatus error code on failure
+/**
+ * @brief executes INSERT operation to add new record
+ * @param[in,out] db pointer to the database
+ * @return OP_SUCCESS on success, appropriate error code on failure
  */
 OpStatus execute_insert(StudentDatabase *db) {
   if (!db) {

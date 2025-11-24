@@ -1,6 +1,16 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+/**
+ * @file constants.h
+ * @brief global constants for buffer sizes, constraints, and limits
+ *
+ * defines application-wide constants including buffer sizes, field constraints,
+ * validation limits, and cryptographic parameters.
+ *
+ * @author Group P1-08 (Timothy, Aamir, Hasif, Dalton, Gin)
+ */
+
 // buffer sizes for user input
 #define INPUT_BUFFER_SIZE 256  // standard user input buffer
 #define ERROR_MESSAGE_SIZE 256 // error message formatting
