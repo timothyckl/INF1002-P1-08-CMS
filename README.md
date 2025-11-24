@@ -51,7 +51,39 @@ make
 Or manually:
 ```bash
 mkdir -p build
-gcc -Iinclude src/*.c src/commands/*.c -o build/main
+gcc -Iinclude -Wall -Wextra -g src/*.c src/commands/*.c -o build/main
+```
+
+### Building for Multiple Platforms
+
+The project supports cross-compilation for macOS and Windows:
+
+**Build for macOS (native):**
+```bash
+make build-macos
+```
+Creates `build/main` executable for macOS.
+
+**Build for Windows (cross-compile):**
+```bash
+make build-windows
+```
+Creates `build/main.exe` executable for Windows. Requires MinGW cross-compiler (`x86_64-w64-mingw32-gcc`).
+
+**Build for both platforms:**
+```bash
+make build-all
+```
+
+**Manual cross-compilation for Windows:**
+```bash
+mkdir -p build
+x86_64-w64-mingw32-gcc -Iinclude -Wall -Wextra -g src/*.c src/commands/*.c -o build/main.exe
+```
+
+**Installing MinGW on macOS:**
+```bash
+brew install mingw-w64
 ```
 
 ### Run
@@ -1728,7 +1760,8 @@ INF1002-P1-08-C/
 │   └── declaration.txt        # team declaration
 │
 ├── build/                     # compiled binaries (created by make)
-│   ├── main                   # main executable
+│   ├── main                   # main executable (macOS)
+│   ├── main.exe               # main executable (Windows)
 │   ├── test_parser
 │   ├── test_database
 │   └── ...                    # other test executables
