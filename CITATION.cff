@@ -37,15 +37,4 @@ authors:
 repository-code: "https://github.com/timothyckl/INF1002-P1-08-CMS"
 
 abstract: >-
-  A terminal-based Class Management System for managing
-  student records.
-
-license: MIT
-
-preferred-citation:
-  type: generic
-  message: >
-    Chia, T., Bin Mohd Faisal, M. H., Chng Cheng Hao, D.,
-    Aamir, M., & Gin Lim, L. (2025). *Class Management System*
-    (Version 1.0) [Computer software]. GitHub.
-    https://github.com/timothyckl/INF1002-P1-08-CMS
+  A terminal-based Class Management System for mana
