@@ -67,7 +67,7 @@ $cmdSrc = Get-ChildItem src\commands\*.c; Get-ChildItem tests\test_*.c | Where-O
 
 - Valid record validation
 - NULL pointer handling
-- ID boundary values (0, 9999999, -1, 10000000)
+- ID boundary values (2500000, 2600000, 2499999, 2600001)
 - Mark boundary values (0.0, 100.0, -0.01, 100.01)
 - Empty name/programme validation
 - Long names and programmes

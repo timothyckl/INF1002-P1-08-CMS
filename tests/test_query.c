@@ -111,7 +111,7 @@ void test_query_nonexistent_id(void) {
   db->table_count = 1;
 
   StudentRecord *record = find_record_by_id(db, 9999999);
-  ASSERT_NULL(record, "Query for missing ID should return NULL");
+  ASSERT_NULL(record, "Query for invalid ID should return NULL");
 
   db_free(db);
 }

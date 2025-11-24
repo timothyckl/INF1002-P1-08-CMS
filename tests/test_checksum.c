@@ -128,7 +128,7 @@ void test_record_checksum_change_detection_mark(void) {
 
 void test_record_checksum_boundary_max_length_name(void) {
   StudentRecord record;
-  record.id = 9999999;
+  record.id = 2600000;
   memset(record.name, 'A', sizeof(record.name) - 1);
   record.name[sizeof(record.name) - 1] = '\0';
   strcpy(record.prog, "Computer Science");
@@ -140,7 +140,7 @@ void test_record_checksum_boundary_max_length_name(void) {
 
 void test_record_checksum_boundary_max_length_programme(void) {
   StudentRecord record;
-  record.id = 9999999;
+  record.id = 2600000;
   strcpy(record.name, "Test Student");
   memset(record.prog, 'B', sizeof(record.prog) - 1);
   record.prog[sizeof(record.prog) - 1] = '\0';

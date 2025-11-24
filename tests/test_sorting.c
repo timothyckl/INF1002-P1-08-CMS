@@ -216,15 +216,15 @@ void test_sort_records_boundary_ids(void) {
   StudentTable *table = table_init("Test");
 
   // add records with boundary ids
-  table_add_record(table, &(StudentRecord){9999999, "Max", "P", 75.0f});
-  table_add_record(table, &(StudentRecord){0, "Min", "P", 80.0f});
-  table_add_record(table, &(StudentRecord){5000000, "Mid", "P", 70.0f});
+  table_add_record(table, &(StudentRecord){2600000, "Max", "P", 75.0f});
+  table_add_record(table, &(StudentRecord){2500000, "Min", "P", 80.0f});
+  table_add_record(table, &(StudentRecord){2550000, "Mid", "P", 70.0f});
 
   sort_records(table->records, table->record_count, SORT_FIELD_ID,
                SORT_ORDER_ASC);
 
-  ASSERT_EQUAL_INT(0, table->records[0].id, "Minimum ID should be first");
-  ASSERT_EQUAL_INT(9999999, table->records[2].id, "Maximum ID should be last");
+  ASSERT_EQUAL_INT(2500000, table->records[0].id, "Minimum ID should be first");
+  ASSERT_EQUAL_INT(2600000, table->records[2].id, "Maximum ID should be last");
 
   table_free(table);
 }

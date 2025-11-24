@@ -136,18 +136,18 @@ void test_table_add_record_null_record(void) {
 
 void test_table_add_record_boundary_id_zero(void) {
   StudentTable *table = table_init("Test");
-  StudentRecord record = create_test_record(0, "Test", "Programme", 50.0f);
+  StudentRecord record = create_test_record(2500000, "Test", "Programme", 50.0f);
   DBStatus status = table_add_record(table, &record);
-  ASSERT_EQUAL_INT(DB_SUCCESS, status, "ID=0 should be valid");
+  ASSERT_EQUAL_INT(DB_SUCCESS, status, "Adding record with MIN_STUDENT_ID should succeed");
   table_free(table);
 }
 
 void test_table_add_record_boundary_id_max(void) {
   StudentTable *table = table_init("Test");
   StudentRecord record =
-      create_test_record(9999999, "Test", "Programme", 50.0f);
+      create_test_record(2600000, "Test", "Programme", 50.0f);
   DBStatus status = table_add_record(table, &record);
-  ASSERT_EQUAL_INT(DB_SUCCESS, status, "ID=9999999 should be valid");
+  ASSERT_EQUAL_INT(DB_SUCCESS, status, "Adding record with MAX_STUDENT_ID should succeed");
   table_free(table);
 }
 
