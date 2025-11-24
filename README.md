@@ -1662,7 +1662,7 @@ For detailed testing information, see [tests/README.md](tests/README.md).
 
 ## Project Structure
 
-```
+```bash
 INF1002-P1-08-C/
 ├── src/                       # source code
 │   ├── main.c                 # programme entry point
