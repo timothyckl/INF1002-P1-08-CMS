@@ -921,15 +921,6 @@ Timestamp            Operation    Status
 ==============================================================
 ```
 
-Empty log:
-```
-==============================================================
-          Operation History for Current Session
-==============================================================
-No operations logged yet.
-==============================================================
-```
-
 **Use Cases:**
 - Review what operations you've performed
 - Verify successful operations
