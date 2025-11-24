@@ -37,7 +37,7 @@ CSV_HEADER: List[str] = ["dataset", "operation", "time_s"]
 DECIMAL_PRECISION: int = 6
 
 # constants - dataset sizes to benchmark
-DATASET_SIZES: List[int] = [100, 500]
+DATASET_SIZES: List[int] = [100, 500, 1000]
 
 # constants - timeout and retry settings
 SUBPROCESS_TIMEOUT_SECONDS: int = 60
