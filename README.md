@@ -30,8 +30,6 @@ A comprehensive command-line application for managing student records with robus
 4. [Architecture & Technical Details](#architecture--technical-details)
 5. [Testing](#testing)
 6. [Project Structure](#project-structure)
-7. [Constants & Limits](#constants--limits)
-8. [Reference Information](#reference-information)
 
 ---
 
@@ -1829,40 +1827,3 @@ INF1002-P1-08-C/
 | **Minimum Mark** | 0.0 | Typical minimum (not enforced) |
 | **Maximum Mark** | 100.0 | Typical maximum (not enforced) |
 | **Display Precision** | 2 decimal places | Output formatting |
-
----
-
-## Reference Information
-
-### Authors
-
-**Team:** P1-08 \
-**Course:** INF1002 - Programming Fundamentals \
-**Instructor:** Assistant Prof Oran Zane Devilly
-
-### Documentation Files
-
-- **README.md** (this file) - Complete user guide and reference
-- **tests/README.md** - Detailed testing documentation
-
-### Default Paths
-
-- **Database:** `data/P1_8-CMS.txt`
-- **Menu:** `assets/menu.txt`
-- **Declaration:** `assets/declaration.txt`
-- **Build Output:** `build/`
-
-### Version Information
-
-- **Project:** INF1002-P1-08-CMS
-- **Language:** C (C99 standard)
-- **Platform:** Cross-platform (Unix/Linux/macOS/Windows)
-
-### Build System
-
-**Make targets:**
-- `make` or `make all` - Build main executable
-- `make clean` - Remove build artefacts
-- `make test-all` - Build and run all tests
-
-**Compiler flags:** Default configuration uses standard C compiler with include path `-Iinclude`
