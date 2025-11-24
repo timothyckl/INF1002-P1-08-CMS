@@ -1,5 +1,6 @@
 # Compiler and flags
 CC := gcc
+MINGW := x86_64-w64-mingw32-gcc
 CFLAGS := -Iinclude -Wall -Wextra -g
 LDFLAGS :=              # e.g. -lm if you need libm
 
@@ -22,7 +23,7 @@ TEST_BINS := $(patsubst $(TEST_DIR)/%.c,$(BUILD_DIR)/%,$(TEST_SRCS))
 # Executable
 TARGET := $(BUILD_DIR)/main
 
-.PHONY: all run tests test test-all clean
+.PHONY: all run tests test test-all clean build-macos build-windows build-all
 
 # Default target
 all: $(TARGET)
@@ -30,6 +31,15 @@ all: $(TARGET)
 # Single-step build: compile & link directly to build/main
 $(TARGET): $(SRCS) $(HDRS) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(SRCS) -o $@ $(LDFLAGS)
+
+# Cross-platform build targets
+build-macos: $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(SRCS) -o $(BUILD_DIR)/main $(LDFLAGS)
+
+build-windows: $(BUILD_DIR)
+	$(MINGW) $(CFLAGS) $(SRCS) -o $(BUILD_DIR)/main.exe $(LDFLAGS)
+
+build-all: build-macos build-windows
 
 # Build all test harnesses
 tests: $(TEST_BINS)
