@@ -40,7 +40,7 @@ $(BUILD_DIR)/%: $(TEST_DIR)/%.c $(TEST_UTILS) $(LIB_SRCS) $(HDRS) | $(BUILD_DIR)
 # Run all tests
 test: tests
 	@echo "╔═══════════════════════════════════════════════════════════╗"
-	@echo "║              Running All Test Suites                     ║"
+	@echo "║              Running All Test Suites                      ║"
 	@echo "╚═══════════════════════════════════════════════════════════╝"
 	@for test in $(TEST_BINS); do \
 		if [ -f $$test ]; then \

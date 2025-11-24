@@ -115,7 +115,7 @@ extern int g_tests_failed;
   do {                                                                         \
     printf(COLOR_YELLOW "\n╔═════════════════════════════════════════════════" \
                         "══════════╗\n" COLOR_RESET);                          \
-    printf(COLOR_YELLOW "║  Test Suite: %-44s║\n" COLOR_RESET, suite_name);    \
+    printf(COLOR_YELLOW "║  Test Suite: %-45s║\n" COLOR_RESET, suite_name);    \
     printf(COLOR_YELLOW "╚═══════════════════════════════════════════════════" \
                         "════════╝\n" COLOR_RESET);                            \
     g_tests_run = 0;                                                           \
