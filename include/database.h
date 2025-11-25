@@ -13,6 +13,7 @@
  * @author Group P1-08 (Timothy, Aamir, Hasif, Dalton, Gin)
  */
 
+#include "constants.h"
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -40,14 +41,14 @@ typedef enum {
 // it
 typedef struct {
   int id;
-  char name[50];
-  char prog[50];
+  char name[MAX_NAME_LENGTH];
+  char prog[MAX_PROGRAMME_LENGTH];
   float mark;
 } StudentRecord;
 
 // table container for column headers and records
 typedef struct {
-  char table_name[50]; // name of this table
+  char table_name[MAX_TABLE_NAME_LENGTH]; // name of this table
 
   // column headers
   char **column_headers; // array of header strings
@@ -62,8 +63,8 @@ typedef struct {
 // database container for tables and metadata
 typedef struct {
   // database-level metadata
-  char db_name[100]; // from "Database Name:" line
-  char authors[200]; // from "Authors:" line
+  char db_name[MAX_DB_NAME_LENGTH]; // from "Database Name:" line
+  char authors[MAX_AUTHORS_LENGTH]; // from "Authors:" line
 
   // table storage (dynamic array)
   StudentTable **tables; // array of table pointers
