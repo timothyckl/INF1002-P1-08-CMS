@@ -1555,20 +1555,7 @@ Comprehensive test suite ensuring system reliability and correctness.
 
 **All tests:**
 ```bash
-make test
-```
-
-**Individual test modules:**
-```bash
-make test:parser      # Parser and validation tests
-make test:database    # Database operation tests
-make test:sorting     # Sorting algorithm tests
-make test:statistics  # Statistical calculation tests
-make test:event_log   # Event logging tests
-make test:commands    # Command precondition tests
-make test:checksum    # CRC32 checksum tests
-make test:adv_query   # Advanced query tests
-make test:query       # Basic query tests
+make test-all
 ```
 
 **Run specific test executable:**
@@ -1686,7 +1673,7 @@ For detailed testing information, see [tests/README.md](tests/README.md).
 ## Project Structure
 
 ```bash
-INF1002-P1-08-C/
+INF1002-P1-08-CMS/
 ├── src/                       # source code
 │   ├── main.c                 # programme entry point
 │   ├── cms.c                  # main application loop and dispatch
@@ -1767,8 +1754,7 @@ INF1002-P1-08-C/
 │   └── ...                    # other test executables
 │
 ├── Makefile                   # build configuration
-├── README.md                  # this file
-└── KEY_FUNCTIONS_DOCUMENTATION.txt  # detailed function docs
+├── README.md
 ```
 
 ### Module Responsibilities
