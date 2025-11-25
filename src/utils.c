@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <sys/stat.h>
 
 /**
  * @brief validates command-line arguments
@@ -28,6 +29,27 @@ FILE *get_file_handle(const char *file_path) {
   }
 
   return file_handle;
+}
+
+/**
+ * @brief checks if a directory exists
+ * @param[in] dir_path path to the directory to check
+ * @return CMS_SUCCESS if directory exists, CMS_ERROR_FILE_OPEN otherwise
+ */
+CMSStatus check_directory_exists(const char *dir_path) {
+  struct stat path_stat;
+
+  // check if path exists
+  if (stat(dir_path, &path_stat) != 0) {
+    return CMS_ERROR_FILE_OPEN; // path does not exist
+  }
+
+  // check if path is a directory
+  if (!S_ISDIR(path_stat.st_mode)) {
+    return CMS_ERROR_FILE_OPEN; // path exists but is not a directory
+  }
+
+  return CMS_SUCCESS; // directory exists
 }
 
 /**

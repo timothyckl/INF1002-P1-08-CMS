@@ -11,6 +11,7 @@
  * @author Group P1-08 (Timothy, Aamir, Hasif, Dalton, Gin)
  */
 
+#include "cms.h"
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -28,6 +29,13 @@ int check_args(int argc, char *argv[]);
  * @return file pointer on success, NULL on failure
  */
 FILE *get_file_handle(const char *file_path);
+
+/**
+ * @brief checks if a directory exists
+ * @param[in] dir_path path to the directory to check
+ * @return CMS_SUCCESS if directory exists, CMS_ERROR_FILE_OPEN otherwise
+ */
+CMSStatus check_directory_exists(const char *dir_path);
 
 /**
  * @brief prints file contents line by line with optional line numbers

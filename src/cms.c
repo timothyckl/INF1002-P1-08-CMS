@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "database.h"
 #include "ui.h"
+#include "utils.h"
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -15,6 +16,27 @@
  * @return CMS_SUCCESS on success, appropriate error code on failure
  */
 CMSStatus cms_init() {
+  // validate required directories exist
+  if (check_directory_exists("assets") != CMS_SUCCESS) {
+    fprintf(stderr, "\nError: Required directory 'assets/' not found.\n");
+    fprintf(stderr, "Ensure the executable (main or main.exe) is in the build/ "
+                    "directory AND you are running it from the project root "
+                    "directory (not from inside build/).\n");
+    fprintf(stderr, "Example: ./build/main (Unix/macOS) or build\\main.exe "
+                    "(Windows)\n\n");
+    return CMS_ERROR_FILE_OPEN;
+  }
+
+  if (check_directory_exists("data") != CMS_SUCCESS) {
+    fprintf(stderr, "\nError: Required directory 'data/' not found.\n");
+    fprintf(stderr, "Ensure the executable (main or main.exe) is in the build/ "
+                    "directory AND you are running it from the project root "
+                    "directory (not from inside build/).\n");
+    fprintf(stderr, "Example: ./build/main (Unix/macOS) or build\\main.exe "
+                    "(Windows)\n\n");
+    return CMS_ERROR_FILE_OPEN;
+  }
+
   // display declaration
   CMSStatus status = ui_display_declaration();
   if (status != CMS_SUCCESS) {
